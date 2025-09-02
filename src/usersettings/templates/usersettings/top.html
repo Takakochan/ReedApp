@@ -1,0 +1,205 @@
+{% extends 'base.html' %}
+{% load widget_tweaks %}
+{% block title %}Data Entry{% endblock title %}
+{% block content %}
+{% if request.user.is_authenticated %}
+<!DOCTYPE html>
+<html>
+<head>
+<script>
+$(document).ready(function()
+{
+    $('.checkvalues').click(function()
+    {
+        var txt="";
+        $('.checkvalues:checked').each(function()
+        {
+            txt+=$(this).val()+","
+        });
+       $('#txtvalues').val(txt); 
+    });
+
+
+    $('#checkBtn').click(function() {
+        checked = $("input[type=checkbox]:checked").length;
+
+        if(!checked) {
+            alert("You must check at least one parameter!");
+            return false;
+        }
+    });   
+
+
+});
+</script>
+    <meta charset="UTF-8">
+    
+    <style>
+    input[type="checkbox"] {
+    display: none;
+    }
+
+    label {
+        display: inline-block;
+        border-radius: 20px;
+        text-align: center;
+        text-decoration: none;
+        border: solid 1px #ccc;
+        transition: 0.25s;
+        padding: 6px 18px;
+        cursor: pointer;
+        font-size: 14px;
+        margin: 3px;
+        }
+
+    input[type="checkbox"]:checked+label {
+        background: #313185;
+        color: #fff;
+        }
+        * {
+            margin: 0;
+        }
+
+        body {
+            width: 960px;
+            margin: 0 auto;
+            padding-top: 50px;
+        }
+                /* カスタムチェックボックス */
+        .custom-checkbox {
+            display: none;
+        }
+
+        .custom-checkbox:checked + .custom-checkbox-label {
+            background: #00809d;
+            color: #fff;
+        }
+
+        .custom-checkbox-label {
+            display: inline-block;
+            border-radius: 20px;
+            text-align: center;
+            text-decoration: none;
+            border: solid 1px #ccc;
+            transition: 0.25s;
+            padding: 6px 18px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 3px;
+        }
+
+        .custom-checkbox-label:hover {
+            opacity: 0.5;
+        }
+
+        
+
+    </style>
+</head>
+
+<body class="bg-gradient-to-r from-indigo-800 to-blue-900 flex items-center justify-center min-h-screen p-8">
+  <div class="flex flex-col lg:flex-row gap-8 items-start w-full">
+    <!-- Main Form Card -->
+    <div class="cursor-pointer block group relative z-50 group bg-white px-6 pt-10 pb-8 shadow-2xl ring-1 ring-gray-900/5 max-w-md w-full rounded-xl sm:px-10 after:h-[1px] after:w-[200px] after:bg-gradient-to-r after:from-transparent after:via-purple-500 after:to-transparent after:absolute after:-top-[2px] after:left-[65%] after:opacity-0 after:content-[''] hover:after:left-[30%] hover:after:opacity-100 after:transition-all animate-fade-in">
+      <div class="p-8 max-w-md w-full animate-fade-in">
+      <h1 class="text-2xl font-bold text-indigo-800 mb-8">Select Parameters for Data Entry </h1>
+      <p class="text-base/7 text-indigo-800 mb-8">
+        Hello {{request.user}} - san! 
+        Choose which reed cane characteristics you'd like to include when entering data. These parameters will appear on the data entry page and are used for analysis and evaluation.
+      </p>
+
+      <!--<a
+        href="https://aceternity.com/templates"
+        class="mt-4 inline-block text-teal-500 font-medium"
+      >
+        Read More
+      </a>-->
+    </div>
+
+
+<form  method="POST">
+    {% csrf_token %}
+
+    <input type="checkbox" value="temperature" id="id_tags_0" class="checkvalues"/> 
+    <label for="id_tags_0">Temperature</label>
+    <input type="checkbox" value="humidity" id="id_tags_1" class="checkvalues"/> 
+    <label for="id_tags_1">Humidity</label>
+    <input type="checkbox" value="cane_brand" id="id_tags_2" class="checkvalues"/> 
+    <label for="id_tags_2">Cane Brand</label>
+    <input type="checkbox" value="harvest_year" id="id_tags_3" class="checkvalues"/> 
+    <label for="id_tags_3">Harvest Year</label>
+    <input type="checkbox" value="gouging_machine" id="id_tags_4" class="checkvalues"/> 
+    <label for="id_tags_4">Gouging Machine</label>
+    <input type="checkbox" value="gouging_machine" id="id_tags_5" class="checkvalues"/> 
+    <label for="id_tags_5">Profile Model</label>
+    <input type="checkbox" value="cane_diamater" id="id_tags_6" class="checkvalues"/> 
+    <label for="id_tags_6">Diamater</label>
+    <input type="checkbox" value="thicness" id="id_tags_7" class="checkvalues"/> 
+    <label for="id_tags_7">Thicness</label>
+    <input type="checkbox" value="hardness" id="id_tags_8" class="checkvalues"/> 
+    <label for="id_tags_8">Hardness</label>
+    <input type="checkbox" value="flexibility" id="id_tags_9" class="checkvalues"/> 
+    <label for="id_tags_9">Flexibility</label>
+   <div class="relative inline-block">
+  <!-- Label 1 -->
+  <input type="checkbox" value="density" id="id_tags_10" class="checkvalues"/> 
+  <label for="id_tags_10" class="peer/density inline-block rounded-full text-center border border-gray-300 transition duration-200 px-4 py-1.5 cursor-pointer m-1 bg-white hover:opacity-50">    Density
+  </label>
+
+  <!-- Label 2 -->
+  <input type="checkbox" value="density_auto" id="id_tags_11" class="checkvalues"/> 
+  <label for="id_tags_11" class="peer/density inline-block rounded-full text-center border border-gray-300 transition duration-200 px-4 py-1.5 cursor-pointer m-1 bg-white hover:opacity-50">
+    Density Auto
+  </label>
+
+  <!-- Tooltip -->
+  <div class="absolute left-full top-0 ml-4 w-96 p-4 bg-white text-indigo-800 text-sm shadow-xl rounded-lg border border-indigo-200 
+              opacity-0 invisible transition-all duration-300
+              peer-hover/density:visible peer-hover/density:opacity-100 z-50 pointer-events-none">
+    <h2 class="text-base font-bold mb-2">Density Input Option</h2>
+    <p class="mb-2"><strong>Density</strong>: Input your pre-calculated density value.</p>
+    <p class="mb-2"><strong>Density Auto</strong>: Enter dry mass and wet mass . The app will calculate the density index using:</p>
+          <p class="text-sm bg-indigo-50 border-l-4 border-indigo-300 pl-4 py-2 mt-2">
+        $$\text{Density Index} = \frac{\text{Dry Mass}}{\text{Wet Mass} + \text{Dry Mass}} $$
+      </p>
+ 
+  </div>
+</div>
+
+    <input type="checkbox" value="shaper" id="id_tags_11" class="checkvalues"/> 
+    <label for="id_tags_11">Shaper</label>
+    <input type="checkbox" value="staple_model" id="id_tags_12" class="checkvalues"/> 
+    <label for="id_tags_12">Staple(ob)</label>
+  
+    <input type="hidden" name="checkboxsetting" id = "txtvalues"/>
+    <!--checkboxのinputのnameからrequest-->
+
+<br>
+<br>
+    <button 
+        id = "checkBtn"
+        type="submit" 
+        class="w-full bg-indigo-800 text-white py-3 rounded-lg font-semibold hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-indigo-800 focus:ring-offset-2 transition-all duration-300 transform hover:scale-[1.02]"
+    >
+        Submit
+    </button>
+</form>
+
+
+
+    
+    
+    
+</body>
+
+</html>
+{% else %}
+<p>Please log in.</p>
+<h2>Log In</h2>
+<form method="GET">
+  {% csrf_token %}
+  {{ registration.form }}
+  <button type="submit">Log In</button>
+</form>
+{% endif %}
+{% endblock content %}

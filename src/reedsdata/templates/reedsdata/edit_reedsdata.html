@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+{% load widget_tweaks %}
+
+{% block content %}
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const useAutoToggle = document.getElementById("id_use_auto_density");
+    const manualDensity = document.getElementById("manual-density");
+    const autoFields = document.getElementById("auto-density-fields");
+    const M1Field = document.getElementById("id_M1");
+    const M2Field = document.getElementById("id_M2");
+    const calculated = document.getElementById("id_calculated_density");
+
+    function updateDisplay() {
+        if (useAutoToggle.checked) {
+            manualDensity.style.display = 'none';
+            autoFields.style.display = 'grid';
+        } else {
+            manualDensity.style.display = 'block';
+            autoFields.style.display = 'none';
+        }
+    }
+
+    function updateDensity() {
+        const m1 = parseFloat(M1Field.value);
+        const m2 = parseFloat(M2Field.value);
+        if (!isNaN(m1) && !isNaN(m2) && (m1 + m2) !== 0) {
+            calculated.value = (m1 / (m1 + m2)).toFixed(4);
+        } else {
+            calculated.value = '';
+        }
+    }
+
+    useAutoToggle.addEventListener("change", updateDisplay);
+    M1Field.addEventListener("input", updateDensity);
+    M2Field.addEventListener("input", updateDensity);
+
+    updateDisplay();  // Run on load
+});
+
+
+</script>
+
+<body class="bg-gradient-to-r from-indigo-800 to-blue-900 flex items-center justify-center min-h-screen p-8">
+    <div class="cursor-pointer block group relative z-50 bg-white px-8 pt-10 pb-8 shadow-2xl ring-1 ring-gray-900/5 max-w-3xl w-full rounded-xl sm:px-12 after:h-[1px] after:w-[200px] after:bg-gradient-to-r after:from-transparent after:via-purple-500 after:to-transparent after:absolute after:-top-[2px] after:left-[65%] after:opacity-0 after:content-[''] hover:after:left-[30%] hover:after:opacity-100 after:transition-all animate-fade-in">
+        <h2 class="text-2xl font-bold text-center text-indigo-800 mb-8">Edit Reed Data</h2>
+
+    <form method="post" class="space-y-4">
+    <div class="grid grid-cols-2 grid-cols-4 gap-8">
+        {% csrf_token %}
+{% for field in form %}
+
+  {% if field.name == 'm1' %}
+   
+    <div class="mb-4">
+      <label for="{{ field.id_for_label }}" class="block font-semibold text-indigo-900 mb-1">Dry Mass M1</label>
+      {{ field|add_class:"w-full px-4 py-2 border border-gray-200 rounded-lg" }}
+    </div>
+  {% elif field.name == 'm2' %}
+    <div class="mb-4">
+      <label for="{{ field.id_for_label }}" class="block font-semibold text-indigo-900 mb-1">Wet Mass M2</label>
+      {{ field|add_class:"w-full px-4 py-2 border border-gray-200 rounded-lg" }}
+    </div>
+    <div class="mb-4">
+      <label for="id_density_auto_display" class="block font-semibold text-indigo-900 mb-1">Calculated Density</label>
+      {{ form.density_auto_display|add_class:"w-full px-4 py-2 border border-gray-200 rounded-lg bg-gray-100" }}
+    </div>
+   
+  {% elif field.name != 'density_auto_display' %}
+    <div class="mb-4">
+      <label for="{{ field.id_for_label }}" class="block font-semibold text-indigo-900 mb-1">{{ field.label }}</label>
+      {{ field|add_class:"w-full px-4 py-2 border border-gray-200 rounded-lg" }}
+    </div>
+
+  {% endif %}
+{% endfor %}
+
+<div class="flex justify-between mt-8">
+{% if prev_obj or next_obj %}
+  <div>
+    {% if prev_obj %}
+      <a href="{% url 'reeds:edit_reedsdata' prev_obj.pk %}" 
+         class="bg-blue-100 text-blue-800 px-4 py-2 rounded hover:bg-blue-200">
+         ← Previous
+      </a>
+    {% else %}
+      </div>
+    {% endif %}
+{% endif %}
+
+
+<br>
+<div class="flex space-x-2 mt-6">
+    <!-- Submit Button -->
+    <button type="submit"
+        class="inline-flex items-center justify-center bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700 transition duration-200">
+        Update
+    </button>
+
+    <!-- Delete Button -->
+    <a href="{% url 'reeds:delete_reedsdata' form.instance.pk %}"
+       class="inline-flex items-center justify-center bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition duration-200">
+        Delete
+    </a>
+
+    <!-- Cancel Button -->
+    <a href="{% url 'reeds:reedsdata_list' %}"
+       class="inline-flex items-center justify-center bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400 transition duration-200">
+        Cancel
+    </a>
+
+</div>
+
+
+<br>
+{% if prev_obj or next_obj %}
+  <div>
+    {% if next_obj %}
+      <a href="{% url 'reeds:edit_reedsdata' next_obj.pk %}" 
+         class="bg-blue-100 text-blue-800 px-4 py-2 rounded hover:bg-blue-200">
+         Next →
+      </a>
+    {% endif %}
+  </div>
+{% endif %}
+</div>
+
+  
+    </form>
+
+</body>
+{% endblock %}

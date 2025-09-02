@@ -1,0 +1,5 @@
+    {% csrf_token %}
+    {% for value, text in form.parameters.field.choices %}
+    <input type="checkbox" value="{{ value }}" id="id_tags_{{ forloop.counter0 }}" {% if value in selected_contact %} checked="checked"{% endif %}/> 
+    <label for="id_tags_{{ forloop.counter0 }}">{{ text }}</label>
+    {% endfor %}

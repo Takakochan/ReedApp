@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% load widget_tweaks %}
+{% block title %}Data Entry{% endblock title %}
+{% block content %}
+
+<!DOCTYPE html>
+     
+<body class="bg-gradient-to-r from-indigo-800 to-blue-900 flex items-center justify-center min-h-screen p-8">
+    <div class="cursor-pointer block group relative z-50 group bg-white px-6 pt-10 pb-8 shadow-2xl ring-1 ring-gray-900/5 max-w-md w-full rounded-xl sm:px-10 after:h-[1px] after:w-[200px] after:bg-gradient-to-r after:from-transparent after:via-purple-500 after:to-transparent after:absolute after:-top-[2px] after:left-[65%] after:opacity-0 after:content-[''] hover:after:left-[30%] hover:after:opacity-100  after:transition-all animate-fade-in">
+        <h2 class="text-2xl font-bold text-center text-indigo-800 mb-8">Data Entry</h2>
+        <form action="" method="POST" id="registrationForm" class="space-y-6" >
+        <div class="grid grid-cols-1 grid-cols-3 gap-8">
+    {% csrf_token %}
+{% for field in form %}
+  {% if field.name == 'm1' %}
+  <br>
+    <div class="mb-4">
+      <label for="{{ field.id_for_label }}" class="block font-semibold text-indigo-900 mb-1">Dry Mass</label>
+      {{ field|add_class:"w-full px-4 py-2 border border-gray-200 rounded-lg" }}
+    </div>
+  {% elif field.name == 'm2' %}
+    <div class="mb-4">
+      <label for="{{ field.id_for_label }}" class="block font-semibold text-indigo-900 mb-1">Wet Mass</label>
+      {{ field|add_class:"w-full px-4 py-2 border border-gray-200 rounded-lg" }}
+    </div>
+    <div class="mb-4">
+      <label for="id_density_auto_display" class="block font-semibold text-indigo-900 mb-1">Calculated Density</label>
+      {{ form.density_auto_display|add_class:"w-full px-4 py-2 border border-gray-200 rounded-lg bg-gray-100" }}
+    </div>
+  {% elif field.name != 'density_auto_display' %}
+    <div class="mb-4">
+      <label for="{{ field.id_for_label }}" class="block font-semibold text-indigo-900 mb-1">{{ field.label }}</label>
+      {{ field|add_class:"w-full px-4 py-2 border border-gray-200 rounded-lg" }}
+    </div>
+  {% endif %}
+{% endfor %}
+
+    <br>
+    <div class="flex space-x-4 mt-6">
+    <button type="submit" class="w-full bg-indigo-800 text-white py-3 rounded-lg font-semibold hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-indigo-800 focus:ring-offset-2 transition-all duration-300 transform hover:scale-[1.02]">Submit</button>
+        </form>
+        
+      </div>
+       <!-- <p class="text-center text-gray-600 mt-6">
+            Already have an account? 
+            <a href="https://tailwindflex.com/@nejaa-badr/login-form-12" class="text-indigo-800 font-semibold hover:text-blue-900 transition-colors duration-300">Sign In</a>
+        </p>-->
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const m1 = document.getElementById("id_m1");
+    const m2 = document.getElementById("id_m2");
+    const autoDensity = document.getElementById("id_density_auto_display");
+
+    function updateDensity() {
+      const m1Val = parseFloat(m1?.value);
+      const m2Val = parseFloat(m2?.value);
+      if (!isNaN(m1Val) && !isNaN(m2Val) && m1Val + m2Val !== 0) {
+        autoDensity.value = (m1Val / (m1Val + m2Val)).toFixed(4);
+      } else {
+        autoDensity.value = "";
+      }
+    }
+
+    if (m1 && m2 && autoDensity) {
+      m1.addEventListener("input", updateDensity);
+      m2.addEventListener("input", updateDensity);
+    }
+  });
+</script>
+
+
+
+</body>
+</html>
+
+{% endblock content %}

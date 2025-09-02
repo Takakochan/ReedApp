@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<body class="bg-gradient-to-r from-indigo-800 to-blue-900 min-h-screen px-1 py-2 sm:px-4 sm:py-6">
+  <div class="w-full bg-white px-2 pt-6 pb-6 sm:px-6 sm:pt-10 sm:pb-8 shadow-2xl ring-1 ring-gray-900/5 rounded-xl animate-fade-in">
+    
+    <h2 class="text-xl sm:text-2xl font-bold text-center text-indigo-800 mb-6 sm:mb-8">My Reeds Data</h2>
+
+    <div class="overflow-x-auto">
+      <table class="min-w-full bg-white border rounded-lg shadow text-sm sm:text-base">
+        <thead class="bg-indigo-100">
+          <tr>
+            <th class="py-1 px-2 sm:py-2 sm:px-4 text-left">Reed ID</th>
+            <th class="py-1 px-2 sm:py-2 sm:px-4 text-left">Evaluation</th>
+            <th class="py-1 px-2 sm:py-2 sm:px-4 text-left">Created Date</th>
+            <th class="py-1 px-2 sm:py-2 sm:px-4 text-left">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for reed in reeds %}
+          <tr class="border-t">
+            <td class="py-1 px-2 sm:py-2 sm:px-4">{{ reed.reed_ID }}</td>
+            <td class="py-1 px-2 sm:py-2 sm:px-4">{{ reed.evaluation }}</td>
+            <td class="py-1 px-2 sm:py-2 sm:px-4">{{ reed.date|date:"d M Y" }}</td>
+            <td class="py-1 px-2 sm:py-2 sm:px-4 space-x-2">
+              <a href="{% url 'reeds:edit_reedsdata' reed.pk %}" class="text-blue-600 hover:underline">Edit</a>
+              <a href="{% url 'reeds:delete_reedsdata' reed.pk %}" class="text-red-600 hover:underline">Delete</a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="4" class="py-4 text-center text-gray-600">No reeds found.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+</body>
+
+
+
+{% endblock %}

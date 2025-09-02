@@ -1,0 +1,42 @@
+{% load static %}
+{% load static tailwind_tags %}
+<!doctype html>
+<html lang="en">
+  <head>
+   {% tailwind_css %}
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <!-- jQuery -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!--Custom css-->
+    <link rel='stylesheet' type='text/css' href={% static 'style.css' %}>
+    <!-- semantic UI -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/semantic-ui@2.5.0/dist/semantic.min.css">
+    <!-- KaTeX CSS and JS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/contrib/auto-render.min.js"
+        onload="renderMathInElement(document.body, {
+        delimiters: [
+            {left: '$$', right: '$$', display: true},
+            {left: '$', right: '$', display: false}
+        ]
+    });"></script>
+    <script src="https://cdn.jsdelivr.net/npm/semantic-ui@2.5.0/dist/semantic.min.js"></script>
+    <title>The Reed App - {% block title %}{% endblock title %}</title>
+  </head>
+  <body>
+    {% include 'navbar.html' %}
+    <div class="pl-16 sm:pl-0 ui container">
+    <!--<div>-->
+    {% block content %}
+    {% endblock content %}
+    </div>
+ 
+   <script type='text/javascript' src={% static 'main.js' %}></script>
+  </body>
+  
+</html>
+

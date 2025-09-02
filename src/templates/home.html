@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% load widget_tweaks %}
+{% block title %}Home{% endblock title %}
+{% block content %}
+<!DOCTYPE html>
+
+<body class="bg-gradient-to-r from-indigo-800 to-blue-900 flex items-center justify-center min-h-screen p-8">
+  <div class="flex gap-8 items-start">
+    <!-- Main Form Card -->
+    <div class="cursor-pointer block group relative z-50 group bg-white px-6 pt-10 pb-8 shadow-2xl ring-1 ring-gray-900/5 max-w-3xl w-full rounded-xl sm:px-10 after:h-[1px] after:w-[200px] after:bg-gradient-to-r after:from-transparent after:via-purple-500 after:to-transparent after:absolute after:-top-[2px] after:left-[65%] after:opacity-0 after:content-[''] hover:after:left-[30%] hover:after:opacity-100 after:transition-all animate-fade-in">
+      <!-- Existing content inside here remains the same -->
+      <div class="p-8 max-w-3xl w-full animate-fade-in">
+<h1 class="text-3xl font-bold text-indigo-900 mb-3">Welcome to The Reed App</h1>
+
+<p class="text-lg text-indigo-800 mb-4 leading-relaxed">
+  This web application is designed for double reed players, reed makers, and researchers who want to systematically collect, analyze, and compare data related to reed cane characteristics.
+</p>
+
+<p class="text-base text-indigo-800 mb-3 leading-relaxed">
+  Whether you're tracking humidity, density, flexibility, or gouging machine details, this tool allows you to select the exact parameters you care about — and store, view, or analyze them over time.
+</p>
+
+<p class="text-base text-indigo-800 mb-3 leading-relaxed">
+  The app includes features like automated density calculation based on dry and wet cane mass, dynamic form generation, and custom data visualizations to support informed reed making and performance decisions.
+</p>
+
+<h2 class="text-2xl font-semibold text-indigo-900 mb-3">How to Use the App</h2>
+
+<p class="text-base text-indigo-800 mb-3 leading-relaxed">
+  Begin by visiting the <strong>Settings</strong> page, where you can choose which reed cane parameters you want to track — like humidity, density, cane brand, or gouging machine.
+</p>
+
+<p class="text-base text-indigo-800 mb-3 leading-relaxed">
+  As you continue making reeds, enter data for each one using the form. Be sure to assign a unique <strong>Reed ID to every piece of cane</strong>, so you can update and analyze it over time.
+</p>
+
+<p class="text-base text-indigo-800 leading-relaxed">
+  From automated density calculations to personalized tracking, this app helps transform your reed making into a structured, data-driven process.
+</p>
+
+
+
+<p class="text-base text-indigo-800 leading-relaxed">
+  Built with Django and TailwindCSS, this project merges artisanal knowledge with modern web technology — because great reeds deserve great data.
+</p>
+
+
+
+</div>
+</div>
+</div>
+</body>
+{% endblock content %}

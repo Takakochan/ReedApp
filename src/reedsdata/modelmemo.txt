@@ -1,0 +1,43 @@
+class Reedsdata(models.Model)
+    reed_ID 
+    cane_brand 
+    gouging_machine
+    diamater
+    thickness
+    hardness
+    flexibility
+    density
+    # for density auto calculation
+    m1 = models.FloatField(null=True, blank=True)
+    m2 = models.FloatField(null=True, blank=True)
+    reedauthor 
+    shaper
+    harvest_year
+    temperature
+    humidity
+    CHOICES = [(i, i) for i in range(11)]
+    evaluation
+    stiffness
+    playing_ease
+    intonation
+    tone_color
+    response
+    global_quality
+
+    ##Models need to be added##
+    Instrument,
+    Staple(oboe), 
+    Profile model,
+
+
+    *From Location and Meteo API?
+    Location
+    Elevation,
+    Air pressure, 
+
+    class Meta:
+        unique_together = ['reed_ID', 'reedauthor']
+
+    def get_fields(self):
+        return [(field.name, getattr(self, field.name))
+                for field in Reedsdata._meta.fields]

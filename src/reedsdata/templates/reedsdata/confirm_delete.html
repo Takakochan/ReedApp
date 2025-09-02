@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-md mx-auto p-6 bg-white shadow rounded text-center">
+    <h2 class="text-xl font-bold text-red-600 mb-4">Confirm Delete</h2>
+    <p class="mb-6">Are you sure you want to delete <strong>{{ object.reed_ID }}</strong>?</p>
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Yes, Delete</button>
+        <a href="{% url 'reeds:reedsdata_list' %}" class="ml-4 text-gray-700 hover:underline">Cancel</a>
+    </form>
+</div>
+{% endblock %}
