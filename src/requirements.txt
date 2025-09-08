@@ -1,0 +1,14 @@
+Django==5.2.4
+django-browser-reload==1.18.0
+django-crispy-forms==2.4
+django-filter==25.1
+django-modelcluster==6.4
+django-permissionedforms==0.1
+django-recurrence==1.11.1
+django-stubs-ext==5.2.1
+django-taggit==6.1.0
+django-tailwind==4.0.1
+django-tasks==0.7.0
+django-treebeard==4.7.1
+django-widget-tweaks==1.5.0
+djangorestframework==3.16.0

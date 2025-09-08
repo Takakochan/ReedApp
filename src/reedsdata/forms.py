@@ -54,9 +54,9 @@ class Caneform(forms.ModelForm):
                 self.fields.pop(field_name)
 
         # Show auto-calculated density
-        if self.instance:
-            self.fields[
-                'density_auto_display'].initial = self.instance.density_auto
+        #if self.instance:
+        #    self.fields[
+        #        'density_auto_display'].initial = self.instance.density_auto
 
     class Meta:
         model = Reedsdata
