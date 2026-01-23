@@ -3,48 +3,78 @@
 {% block title %}Data Entry{% endblock title %}
 {% block content %}
 
-<!DOCTYPE html>
-     
-<body class="bg-gradient-to-r from-indigo-800 to-blue-900 flex items-center justify-center min-h-screen p-8">
-    <div class="cursor-pointer block group relative z-50 group bg-white px-6 pt-10 pb-8 shadow-2xl ring-1 ring-gray-900/5 max-w-md w-full rounded-xl sm:px-10 after:h-[1px] after:w-[200px] after:bg-gradient-to-r after:from-transparent after:via-purple-500 after:to-transparent after:absolute after:-top-[2px] after:left-[65%] after:opacity-0 after:content-[''] hover:after:left-[30%] hover:after:opacity-100  after:transition-all animate-fade-in">
-        <h2 class="text-2xl font-bold text-center text-indigo-800 mb-8">Data Entry</h2>
-        <form action="" method="POST" id="registrationForm" class="space-y-6" >
-        <div class="grid grid-cols-1 grid-cols-3 gap-8">
-    {% csrf_token %}
-{% for field in form %}
-  {% if field.name == 'm1' %}
-  <br>
-    <div class="mb-4">
-      <label for="{{ field.id_for_label }}" class="block font-semibold text-indigo-900 mb-1">Dry Mass</label>
-      {{ field|add_class:"w-full px-4 py-2 border border-gray-200 rounded-lg" }}
-    </div>
-  {% elif field.name == 'm2' %}
-    <div class="mb-4">
-      <label for="{{ field.id_for_label }}" class="block font-semibold text-indigo-900 mb-1">Wet Mass</label>
-      {{ field|add_class:"w-full px-4 py-2 border border-gray-200 rounded-lg" }}
-    </div>
-    <div class="mb-4">
-      <label for="id_density_auto_display" class="block font-semibold text-indigo-900 mb-1">Calculated Density</label>
-      {{ form.density_auto_display|add_class:"w-full px-4 py-2 border border-gray-200 rounded-lg bg-gray-100" }}
-    </div>
-  {% elif field.name != 'density_auto_display' %}
-    <div class="mb-4">
-      <label for="{{ field.id_for_label }}" class="block font-semibold text-indigo-900 mb-1">{{ field.label }}</label>
-      {{ field|add_class:"w-full px-4 py-2 border border-gray-200 rounded-lg" }}
-    </div>
-  {% endif %}
-{% endfor %}
+<div class="bg-white rounded-xl shadow-2xl p-8">
+    <h2 class="text-2xl font-bold text-center text-indigo-800 mb-6">Single Data Entry</h2>
 
-    <br>
-    <div class="flex space-x-4 mt-6">
-    <button type="submit" class="w-full bg-indigo-800 text-white py-3 rounded-lg font-semibold hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-indigo-800 focus:ring-offset-2 transition-all duration-300 transform hover:scale-[1.02]">Submit</button>
+        <form action="" method="POST" id="registrationForm" class="space-y-3">
+            {% csrf_token %}
+            
+            <!-- Dynamic grid based on number of fields - responsive columns -->
+            {% with field_count=form.visible_fields|length %}
+                {% if field_count <= 2 %}
+                    <div class="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-4 md:gap-5 lg:gap-6">
+                {% elif field_count <= 4 %}
+                    <div class="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-4 md:gap-5 lg:gap-6">
+                {% elif field_count <= 6 %}
+                    <div class="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-4 md:gap-5 lg:gap-6">
+                {% elif field_count <= 8 %}
+                    <div class="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-4 md:gap-5 lg:gap-6">
+                {% else %}
+                    <div class="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-4 md:gap-5 lg:gap-6">
+                {% endif %}
+            {% endwith %}
+
+                {% for field in form %}
+                  {% if field.name == 'm1' %}
+                    <div class="space-y-1 p-1 min-w-0">
+                      <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-indigo-900 truncate">Dry Mass</label>
+                      {{ field|add_class:"w-full max-w-full px-2 py-1.5 text-sm border border-gray-200 rounded focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500" }}
+                    </div>
+                  {% elif field.name == 'm2' %}
+                    <div class="space-y-1 p-1 min-w-0">
+                      <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-indigo-900 truncate">Wet Mass</label>
+                      {{ field|add_class:"w-full max-w-full px-2 py-1.5 text-sm border border-gray-200 rounded focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500" }}
+                    </div>
+                    <div class="space-y-1 p-1 min-w-0">
+                      <label for="id_density_auto_display" class="block text-sm font-medium text-indigo-900 truncate">Calculated Density</label>
+                      {{ form.density_auto_display|add_class:"w-full max-w-full px-2 py-1.5 text-sm border border-gray-200 rounded bg-gray-50 text-gray-600" }}
+                    </div>
+                  {% elif field.name == 'cane_brand' %}
+                    <div class="space-y-1 p-1 min-w-0 relative">
+                      <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-indigo-900 truncate">{{ field.label }}</label>
+                      <div id="cane-brand-container" class="relative">
+                        {{ field|add_class:"w-full max-w-full px-2 py-1.5 text-sm border border-gray-200 rounded focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500" }}
+                        <!-- Tooltip for Cane Brand -->
+                        <div id="cane-brand-tooltip" class="absolute left-0 bottom-full mb-2 w-80 p-4 bg-white text-indigo-800 text-sm shadow-xl rounded-lg border border-indigo-200 z-[9998] opacity-0 invisible transition-all duration-300 pointer-events-none">
+                          <h3 class="font-bold mb-2 text-indigo-900">Can't find your cane maker?</h3>
+                          <p class="mb-2">If you cannot find your cane maker in the list, please <a href="{% url 'contact:contact' %}" class="text-indigo-600 underline hover:text-indigo-800">contact us</a>, and we will immediately add the cane maker's name to our database.</p>
+                        </div>
+                      </div>
+                    </div>
+                  {% elif field.name != 'density_auto_display' %}
+                    <div class="space-y-1 p-1 min-w-0">
+                      <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-indigo-900 truncate">{{ field.label }}</label>
+                      {{ field|add_class:"w-full max-w-full px-2 py-1.5 text-sm border border-gray-200 rounded focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500" }}
+                    </div>
+                  {% endif %}
+                {% endfor %}
+                
+            </div> <!-- Close dynamic grid -->
+
+
+
+            <!-- Submit button with better sizing -->
+            <div class="flex justify-center mt-8">
+                <button type="submit" class="w-full max-w-md bg-indigo-800 text-white py-3 px-8 rounded-lg font-semibold hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-indigo-800 focus:ring-offset-2 transition-all duration-300 transform hover:scale-[1.02]">
+                    Submit Reed Data
+                </button>
+            </div>
         </form>
-        
-      </div>
-       <!-- <p class="text-center text-gray-600 mt-6">
-            Already have an account? 
-            <a href="https://tailwindflex.com/@nejaa-badr/login-form-12" class="text-indigo-800 font-semibold hover:text-blue-900 transition-colors duration-300">Sign In</a>
-        </p>-->
+</div>
+
+<!-- Add bottom spacing for comfortable scrolling -->
+<div class="h-20"></div>
+
 <script>
   document.addEventListener("DOMContentLoaded", function () {
     const m1 = document.getElementById("id_m1");
@@ -66,11 +96,29 @@
       m2.addEventListener("input", updateDensity);
     }
   });
+  
+  // Cane Brand tooltip functionality
+  const caneBrandContainer = document.getElementById("cane-brand-container");
+  const caneBrandTooltip = document.getElementById("cane-brand-tooltip");
+  let hoverTimeout;
+  
+  if (caneBrandContainer && caneBrandTooltip) {
+    caneBrandContainer.addEventListener("mouseenter", function() {
+      // Start 6-second timer
+      hoverTimeout = setTimeout(function() {
+        caneBrandTooltip.classList.remove("opacity-0", "invisible");
+        caneBrandTooltip.classList.add("opacity-100", "visible");
+      }, 6000); // 6 seconds
+    });
+    
+    caneBrandContainer.addEventListener("mouseleave", function() {
+      // Clear timer and hide tooltip
+      clearTimeout(hoverTimeout);
+      caneBrandTooltip.classList.add("opacity-0", "invisible");
+      caneBrandTooltip.classList.remove("opacity-100", "visible");
+    });
+  }
+  
 </script>
-
-
-
-</body>
-</html>
 
 {% endblock content %}

@@ -11,6 +11,10 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 import os
 from pathlib import Path
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -19,12 +23,15 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-b^#r@863s6g1en^-%(2%-j*%c13t^an9g=8nn_-y*gekp0g(t3'
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-dev-key-change-in-production')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = []
+# For testing custom error pages, temporarily set DEBUG = False
+# DEBUG = False  # Uncomment this line to test error pages
+
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost']  # Required when DEBUG = False
 
 # Application definition
 
@@ -35,12 +42,15 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'axes',  # Must be after django.contrib.admin for admin integration
     'reedsdata',
     'tailwind',
     'theme',
     'django_browser_reload',
     'widget_tweaks',
     'usersettings',
+    'contact',
+    'account',
 ]
 
 TAILWIND_APP_NAME = 'theme'
@@ -54,7 +64,13 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django_browser_reload.middleware.BrowserReloadMiddleware',
+    'axes.middleware.AxesMiddleware',  # Must be last for proper request tracking
 ]
+
+# Add security middleware only in production (when DEBUG=False)
+if not DEBUG:
+    MIDDLEWARE.insert(1, 'reedmanage.security_middleware.SuspiciousRequestMiddleware')
+    MIDDLEWARE.insert(-1, 'reedmanage.security_middleware.SecurityHeadersMiddleware')
 
 ROOT_URLCONF = 'reedmanage.urls'
 
@@ -99,6 +115,9 @@ AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME':
         'django.contrib.auth.password_validation.MinimumLengthValidator',
+        'OPTIONS': {
+            'min_length': 10,  # Increased from default 8
+        }
     },
     {
         'NAME':
@@ -138,5 +157,106 @@ MEDIA_ROOT = os.path.join(os.path.dirname(BASE_DIR), 'static_cdn',
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 LOGIN_REDIRECT_URL = "/add/"
+LOGIN_URL = "/login"
 
 #AUTH_USER_MODEL = "accounts.User"
+
+# Email settings
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')  # Add your Gmail email here
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')  # Add your Gmail app password here
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+# Security Logging Configuration
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'file': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs', 'django.log'),
+            'maxBytes': 1024*1024*10,  # 10MB
+            'backupCount': 5,
+            'formatter': 'verbose',
+        },
+        'security_file': {
+            'level': 'WARNING',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs', 'security.log'),
+            'maxBytes': 1024*1024*10,  # 10MB
+            'backupCount': 10,
+            'formatter': 'verbose',
+        },
+        'console': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['file', 'console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'django.security': {
+            'handlers': ['security_file', 'console'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+        'reedsdata.security': {
+            'handlers': ['security_file', 'console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+    },
+}
+
+# Additional Security Settings - Relaxed for development
+SESSION_COOKIE_AGE = 86400  # 24 hours (was 1 hour)
+SESSION_SAVE_EVERY_REQUEST = False  # Don't save on every request 
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False  # Don't expire when browser closes
+CSRF_COOKIE_HTTPONLY = True
+
+# Content Security Policy for development - more permissive for Tailwind CSS
+CSP_DEFAULT_SRC = ("'self'",)
+CSP_SCRIPT_SRC = ("'self'", "'unsafe-inline'", "'unsafe-eval'", "https://cdn.jsdelivr.net")
+CSP_STYLE_SRC = ("'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdn.jsdelivr.net")
+CSP_FONT_SRC = ("'self'", "https://fonts.gstatic.com")
+CSP_IMG_SRC = ("'self'", "data:", "blob:")
+CSP_CONNECT_SRC = ("'self'",)
+CSP_FRAME_ANCESTORS = ("'none'",)
+
+# Allow more flexibility for development
+SECURE_CROSS_ORIGIN_OPENER_POLICY = None
+
+# Django-axes configuration for brute force protection
+AUTHENTICATION_BACKENDS = [
+    'axes.backends.AxesStandaloneBackend',  # AxesStandaloneBackend should be first
+    'django.contrib.auth.backends.ModelBackend',
+]
+
+AXES_FAILURE_LIMIT = 5  # Lock account after 5 failed attempts
+AXES_COOLOFF_TIME = 1  # Lock for 1 hour (in hours)
+AXES_RESET_ON_SUCCESS = True  # Reset failed attempts on successful login
+AXES_LOCKOUT_TEMPLATE = None  # Use default error messages
+AXES_LOCKOUT_PARAMETERS = [['username']]  # Lock by username
+AXES_VERBOSE = True  # Log lockout attempts
+
+# Email verification settings
+EMAIL_VERIFICATION_REQUIRED = False  # Set to True to enable email verification (disabled for testing)
+EMAIL_VERIFICATION_EXPIRY_HOURS = 24  # Link expires after 24 hours

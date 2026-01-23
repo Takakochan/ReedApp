@@ -1,0 +1,270 @@
+<!-- Weather Header Component -->
+<div id="weather-header" class="hidden text-white px-4 py-2 text-sm shadow-sm relative z-50" style="background: linear-gradient(to right, transparent, rgba(96, 165, 250, 0.5), rgb(99, 102, 241)); box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);">
+    <div class="container mx-auto flex items-center justify-between" style="max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between;">
+        <!-- Left side - empty or could contain app info -->
+        <div class="flex items-center" style="display: flex; align-items: center;">
+            <!-- You can add app title or other content here if needed -->
+        </div>
+        
+        <!-- Right side - Weather Info -->
+        <div class="flex items-center space-x-1" style="display: flex; align-items: center; gap: 0.25rem;">
+            <!-- Weather Info -->
+            <div id="weather-info" class="flex items-center space-x-1 md:space-x-4 text-xs overflow-hidden" style="display: flex; align-items: center; gap: 0.25rem; font-size: 0.75rem; overflow: hidden;">
+                <!-- Mobile: Show all data in compact format -->
+                <div class="flex items-center space-x-1 md:hidden" style="display: flex; align-items: center; gap: 0.25rem;">
+                    <span id="location-display" class="truncate max-w-[80px]" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 80px;">📍 --</span>
+                    <span id="temp-display" class="whitespace-nowrap" style="white-space: nowrap;">🌡️ --°C</span>
+                    <span id="humidity-display" class="whitespace-nowrap" style="white-space: nowrap;">💧 --%</span>
+                    <span id="pressure-display" class="whitespace-nowrap" style="white-space: nowrap;">📊 --</span>
+                    <span id="weather-display" class="truncate max-w-[60px]" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 60px;">☁️ --</span>
+                </div>
+                <!-- Desktop: Show all data with normal spacing -->
+                <div class="hidden md:flex items-center space-x-4 text-sm" style="display: none; align-items: center; gap: 1rem; font-size: 0.875rem;">
+                    <span id="location-display-desktop" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">📍 --</span>
+                    <span id="temp-display-desktop">🌡️ --°C</span>
+                    <span id="humidity-display-desktop">💧 --%</span>
+                    <span id="pressure-display-desktop">📊 -- hPa</span>
+                    <span id="weather-display-desktop">☁️ --</span>
+                </div>
+            </div>
+            
+            <!-- Controls -->
+            <div class="flex items-center ml-4" style="display: flex; align-items: center; margin-left: 1rem;">
+                <button id="close-weather" class="text-xs px-1 py-1 rounded transition-colors" style="color: rgba(255, 255, 255, 0.8); font-size: 0.75rem; padding: 0.25rem; border-radius: 0.25rem; background: none; border: none; cursor: pointer;" title="Hide weather header" onmouseover="this.style.color='rgba(255,255,255,1)'; this.style.backgroundColor='rgba(255,255,255,0.1)'" onmouseout="this.style.color='rgba(255,255,255,0.8)'; this.style.backgroundColor='transparent'">
+                    ✕
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Weather Toggle Button (shows when header is hidden) -->
+<div id="weather-toggle" class="hidden bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 text-xs rounded-bl-lg shadow-lg fixed top-0 right-0 z-50 transition-all cursor-pointer">
+    <span title="Show weather header">🌤️ Weather</span>
+</div>
+
+
+<script>
+// Weather Header Management
+class WeatherHeader {
+    constructor() {
+        this.weatherData = null;
+        this.locationPermission = sessionStorage.getItem('locationPermission');
+        this.weatherEnabled = localStorage.getItem('weatherEnabled') !== 'false';
+        
+        this.init();
+    }
+    
+    init() {
+        if (this.weatherEnabled && this.locationPermission !== 'denied') {
+            this.showHeader();
+            if (this.locationPermission === 'granted') {
+                this.loadWeather();
+            } else if (!this.locationPermission) {
+                this.showLocationModal();
+            }
+        } else if (!this.weatherEnabled) {
+            // Show toggle button when weather is disabled
+            this.showToggle();
+        }
+        
+        this.bindEvents();
+    }
+    
+    showHeader() {
+        document.getElementById('weather-header').classList.remove('hidden');
+        document.getElementById('weather-toggle').classList.add('hidden');
+    }
+    
+    hideHeader() {
+        document.getElementById('weather-header').classList.add('hidden');
+        this.showToggle();
+    }
+    
+    showToggle() {
+        document.getElementById('weather-toggle').classList.remove('hidden');
+    }
+    
+    hideToggle() {
+        document.getElementById('weather-toggle').classList.add('hidden');
+    }
+    
+    showLocationModal() {
+        const modal = document.getElementById('location-permission-modal');
+        modal.classList.remove('hidden');
+        modal.style.display = 'block';
+    }
+    
+    hideLocationModal() {
+        const modal = document.getElementById('location-permission-modal');
+        modal.classList.add('hidden');
+        modal.style.display = 'none';
+    }
+    
+    async loadWeather(forceRefresh = false) {
+        if (!navigator.geolocation) {
+            console.log('Geolocation not supported');
+            this.updateDisplay({ error: true });
+            return;
+        }
+        
+        // Check for cached weather data (30 minutes = 1800000ms)
+        if (!forceRefresh) {
+            const cachedData = sessionStorage.getItem('currentWeather');
+            const cachedTimestamp = sessionStorage.getItem('weatherTimestamp');
+            
+            if (cachedData && cachedTimestamp) {
+                const age = Date.now() - parseInt(cachedTimestamp);
+                if (age < 30 * 60 * 1000) { // 30 minutes
+                    console.log('Using cached weather data (age:', Math.round(age / 60000), 'minutes)');
+                    this.weatherData = JSON.parse(cachedData);
+                    this.updateDisplay();
+                    return;
+                }
+                console.log('Cached weather data expired (age:', Math.round(age / 60000), 'minutes)');
+            }
+        }
+        
+        // Show loading state
+        this.updateDisplay({ loading: true });
+        
+        try {
+            console.log('Getting geolocation...');
+            const position = await new Promise((resolve, reject) => {
+                navigator.geolocation.getCurrentPosition(resolve, reject, {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 300000
+                });
+            });
+            
+            console.log('Got position:', position.coords.latitude, position.coords.longitude);
+            
+            const response = await fetch(`/reeds/get-weather/?lat=${position.coords.latitude}&lon=${position.coords.longitude}`);
+            console.log('Weather API response status:', response.status);
+            
+            const result = await response.json();
+            console.log('Weather API result:', result);
+            
+            if (result.success && result.data) {
+                this.weatherData = result.data;
+                this.updateDisplay();
+                
+                // Store weather data and timestamp in session
+                sessionStorage.setItem('currentWeather', JSON.stringify(this.weatherData));
+                sessionStorage.setItem('weatherTimestamp', Date.now().toString());
+                console.log('Weather data loaded successfully and cached:', this.weatherData);
+            } else {
+                console.error('Weather API returned error:', result.error);
+                this.updateDisplay({ error: true });
+            }
+        } catch (error) {
+            console.error('Weather loading error:', error);
+            this.updateDisplay({ error: true });
+        }
+    }
+    
+    updateDisplay(data = this.weatherData) {
+        // Helper function to update both mobile and desktop elements
+        const updateElements = (suffix, locationText, tempText, humidityText, pressureText, weatherText) => {
+            const locationEl = document.getElementById(`location-display${suffix}`);
+            const tempEl = document.getElementById(`temp-display${suffix}`);
+            const humidityEl = document.getElementById(`humidity-display${suffix}`);
+            const pressureEl = document.getElementById(`pressure-display${suffix}`);
+            const weatherEl = document.getElementById(`weather-display${suffix}`);
+            
+            if (locationEl) locationEl.textContent = locationText;
+            if (tempEl) tempEl.textContent = tempText;
+            if (humidityEl) humidityEl.textContent = humidityText;
+            if (pressureEl) pressureEl.textContent = pressureText;
+            if (weatherEl) weatherEl.textContent = weatherText;
+        };
+        
+        if (data && data.loading) {
+            updateElements('', '📍 Loading...', '🌡️ --°C', '💧 --%', '📊 --', '☁️ --');
+            updateElements('-desktop', '📍 Loading...', '🌡️ --°C', '💧 --%', '📊 -- hPa', '☁️ --');
+            return;
+        }
+        
+        if (!data || data.error) {
+            updateElements('', '📍 Unavailable', '🌡️ --°C', '💧 --%', '📊 --', '☁️ --');
+            updateElements('-desktop', '📍 Location unavailable', '🌡️ --°C', '💧 --%', '📊 -- hPa', '☁️ --');
+            return;
+        }
+        
+        // Mobile display (shorter text)
+        const locationShort = data.location ? data.location.split(',')[0] : 'Unknown'; // Show only first part
+        const weatherShort = data.weather_description ? data.weather_description.split(' ')[0] : '--'; // Show only first word
+        updateElements('', 
+            `📍 ${locationShort}`, 
+            `🌡️ ${data.temperature || '--'}°C`, 
+            `💧 ${data.humidity || '--'}%`, 
+            `📊 ${data.air_pressure || '--'}`, 
+            `☁️ ${weatherShort}`
+        );
+        
+        // Desktop display (full text)
+        updateElements('-desktop',
+            `📍 ${data.location || 'Unknown'}`,
+            `🌡️ ${data.temperature || '--'}°C`,
+            `💧 ${data.humidity || '--'}%`,
+            `📊 ${data.air_pressure || '--'} hPa`,
+            `☁️ ${data.weather_description || '--'}`
+        );
+    }
+    
+    bindEvents() {
+        // Allow location
+        document.getElementById('allow-location').addEventListener('click', () => {
+            sessionStorage.setItem('locationPermission', 'granted');
+            this.locationPermission = 'granted';
+            this.hideLocationModal();
+            this.loadWeather();
+        });
+        
+        // Deny location
+        document.getElementById('deny-location').addEventListener('click', () => {
+            sessionStorage.setItem('locationPermission', 'denied');
+            this.locationPermission = 'denied';
+            this.hideLocationModal();
+            this.hideHeader();
+        });
+        
+        // Close weather header
+        document.getElementById('close-weather').addEventListener('click', () => {
+            localStorage.setItem('weatherEnabled', 'false');
+            this.weatherEnabled = false;
+            this.hideHeader();
+        });
+        
+        // Show weather header again
+        document.getElementById('weather-toggle').addEventListener('click', () => {
+            localStorage.setItem('weatherEnabled', 'true');
+            this.weatherEnabled = true;
+            this.showHeader();
+            if (this.locationPermission === 'granted') {
+                this.loadWeather();
+            } else if (!this.locationPermission || this.locationPermission === 'denied') {
+                this.showLocationModal();
+            }
+        });
+    }
+    
+    // Public method to get current weather for form submissions
+    getCurrentWeather() {
+        return this.weatherData;
+    }
+}
+
+// Initialize weather header when DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+    window.weatherHeader = new WeatherHeader();
+    
+    // Auto-refresh every 30 minutes
+    setInterval(() => {
+        if (window.weatherHeader.locationPermission === 'granted' && window.weatherHeader.weatherEnabled) {
+            window.weatherHeader.loadWeather();
+        }
+    }, 30 * 60 * 1000);
+});
+</script>

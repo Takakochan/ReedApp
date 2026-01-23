@@ -6,12 +6,56 @@
    {% tailwind_css %}
     <!-- Required meta tags -->
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover">
+
+    <!-- PWA Meta Tags -->
+    <meta name="description" content="Track, analyze, and optimize your double reed making process with comprehensive data logging and ML-powered analytics">
+    <meta name="theme-color" content="#4F46E5">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="ReedManage">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{% static 'favicon.ico' %}">
+    <link rel="shortcut icon" type="image/x-icon" href="{% static 'favicon.ico' %}">
+
+    <!-- Apple Touch Icons -->
+    <link rel="apple-touch-icon" sizes="152x152" href="{% static 'icons/icon-152x152.png' %}">
+    <link rel="apple-touch-icon" sizes="192x192" href="{% static 'icons/icon-192x192.png' %}">
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="{% static 'manifest.json' %}">
+
     <!-- jQuery -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
     <!--Custom css-->
     <link rel='stylesheet' type='text/css' href={% static 'style.css' %}>
+    
+    <!-- Navbar styling -->
+    <style>
+        /* Navbar text color - indigo-200 for unselected items */
+        .fixed a:not(.active), .fixed span:not(.active), 
+        .hidden.sm\:flex a:not(.active), .hidden.sm\:flex span:not(.active),
+        .fixed a:not(.active) span.text-base.font-medium,
+        .hidden.sm\:flex a:not(.active) span.text-base.font-medium {
+            color: #A5B4FC !important; /* text-indigo-300 */
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3) !important;
+        }
+        
+        /* Active state styling - only apply background to the link container */
+        .fixed a.active,
+        .hidden.sm\:flex a.active {
+            background-color: rgba(67, 56, 202, 0.9) !important;
+            box-shadow: inset 0 0 15px rgba(255, 255, 255, 0.15) !important;
+        }
+        
+        /* Active state text color - apply to icon and text elements */
+        .fixed a.active *,
+        .hidden.sm\:flex a.active * {
+            color: #ffffff !important;
+        }
+    </style>
+    
     <!-- semantic UI -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/semantic-ui@2.5.0/dist/semantic.min.css">
     <!-- KaTeX CSS and JS -->
@@ -27,15 +71,158 @@
     <script src="https://cdn.jsdelivr.net/npm/semantic-ui@2.5.0/dist/semantic.min.js"></script>
     <title>The Reed App - {% block title %}{% endblock title %}</title>
   </head>
-  <body>
+  <body class="bg-white">
+    {% include 'weather_header.html' %}
     {% include 'navbar.html' %}
-    <div class="pl-16 sm:pl-0 ui container">
-    <!--<div>-->
-    {% block content %}
-    {% endblock content %}
+    <div class="main-content bg-white pl-16 sm:pl-56">
+      <div class="p-4 lg:p-8">
+        <!-- Responsive layout: flex-col on mobile, flex-row on desktop -->
+        <div class="flex flex-col lg:flex-row gap-6 items-start w-full">
+          <!-- Main Content -->
+          <div class="w-full lg:flex-1">
+            {% block content %}
+            {% endblock content %}
+          </div>
+          
+          <!-- Advertisement Space - Hidden on mobile, visible on desktop -->
+          <div class="hidden lg:block w-[300px] flex-shrink-0">
+            <div style="background-color: #f5f5f5; border: 2px solid #e5e5e5; border-radius: 8px; padding: 2rem 1rem; text-align: center; color: #6b7280; font-size: 1rem; font-weight: bold; min-height: 400px; display: flex; align-items: center; justify-content: center; position: sticky; top: 2rem;">
+              <div>
+                <div>Advertisement Space</div>
+                <div>300px × 400px</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
- 
-   <script type='text/javascript' src={% static 'main.js' %}></script>
+
+    <!-- Location Permission Modal - Positioned at end of body for proper z-index layering -->
+    <div id="location-permission-modal" class="hidden" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0,0,0,0.5); z-index: 10000;">
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; border-radius: 8px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); max-width: 28rem; width: 90%; padding: 1.5rem;">
+            <div class="flex items-center mb-4">
+                <span class="text-2xl mr-3">📍</span>
+                <h3 class="text-lg font-semibold text-gray-900">Enable Location for Weather</h3>
+            </div>
+            <p class="text-gray-600 mb-6">
+                Allow location access to automatically capture weather conditions when recording reed quality assessments. This helps track environmental factors that may affect reed performance.
+            </p>
+            <div class="flex justify-end space-x-3">
+                <button id="deny-location" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-md transition-colors">
+                    Not Now
+                </button>
+                <button id="allow-location" class="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-md transition-colors">
+                    Allow Location
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cookie Consent Banner -->
+    <div id="cookie-consent-banner" class="hidden fixed bottom-0 left-0 right-0 bg-gray-900 text-white p-4 z-50" style="box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.1);">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="text-sm">
+                <p>
+                    We use cookies to enhance your experience. By continuing to use ReedManage, you accept our use of cookies.
+                    <a href="{% url 'privacy_policy' %}" class="underline hover:text-indigo-300">Learn more</a>
+                </p>
+            </div>
+            <div class="flex gap-3">
+                <button id="accept-cookies" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md transition-colors whitespace-nowrap">
+                    Accept
+                </button>
+                <button id="decline-cookies" class="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-md transition-colors whitespace-nowrap">
+                    Decline
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-100 border-t border-gray-200 mt-12 pl-16 sm:pl-56">
+        <div class="max-w-7xl mx-auto px-4 py-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- About -->
+                <div>
+                    <h3 class="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4">About ReedManage</h3>
+                    <p class="text-gray-600 text-sm">
+                        Track, analyze, and optimize your double reed making process with comprehensive data logging and ML-powered analytics.
+                    </p>
+                </div>
+
+                <!-- Links -->
+                <div>
+                    <h3 class="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4">Quick Links</h3>
+                    <ul class="space-y-2 text-sm">
+                        <li><a href="{% url 'home' %}" class="text-gray-600 hover:text-indigo-600">Home</a></li>
+                        {% if user.is_authenticated %}
+                        <li><a href="{% url 'account:account' %}" class="text-gray-600 hover:text-indigo-600">Account</a></li>
+                        <li><a href="{% url 'account:statistics' %}" class="text-gray-600 hover:text-indigo-600">Statistics</a></li>
+                        {% else %}
+                        <li><a href="{% url 'login' %}" class="text-gray-600 hover:text-indigo-600">Login</a></li>
+                        <li><a href="{% url 'signup' %}" class="text-gray-600 hover:text-indigo-600">Sign Up</a></li>
+                        {% endif %}
+                        <li><a href="{% url 'contact:contact' %}" class="text-gray-600 hover:text-indigo-600">Contact</a></li>
+                    </ul>
+                </div>
+
+                <!-- Legal -->
+                <div>
+                    <h3 class="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4">Legal</h3>
+                    <ul class="space-y-2 text-sm">
+                        <li><a href="{% url 'privacy_policy' %}" class="text-gray-600 hover:text-indigo-600">Privacy Policy</a></li>
+                        <li><a href="{% url 'terms_of_service' %}" class="text-gray-600 hover:text-indigo-600">Terms of Service</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="mt-8 pt-8 border-t border-gray-200 text-center text-sm text-gray-500">
+                <p>&copy; 2026 ReedManage. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Cookie Consent JavaScript -->
+    <script>
+        // Check if user has already responded to cookie consent
+        function checkCookieConsent() {
+            const consent = localStorage.getItem('cookieConsent');
+            if (!consent) {
+                document.getElementById('cookie-consent-banner').classList.remove('hidden');
+            }
+        }
+
+        // Accept cookies
+        document.getElementById('accept-cookies')?.addEventListener('click', function() {
+            localStorage.setItem('cookieConsent', 'accepted');
+            document.getElementById('cookie-consent-banner').classList.add('hidden');
+        });
+
+        // Decline cookies
+        document.getElementById('decline-cookies')?.addEventListener('click', function() {
+            localStorage.setItem('cookieConsent', 'declined');
+            document.getElementById('cookie-consent-banner').classList.add('hidden');
+        });
+
+        // Check consent on page load
+        document.addEventListener('DOMContentLoaded', checkCookieConsent);
+    </script>
+
+    <!-- Service Worker Registration for PWA -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/static/sw.js')
+                    .then(function(registration) {
+                        console.log('Service Worker registered successfully:', registration.scope);
+                    })
+                    .catch(function(error) {
+                        console.log('Service Worker registration failed:', error);
+                    });
+            });
+        }
+    </script>
+
   </body>
   
 </html>

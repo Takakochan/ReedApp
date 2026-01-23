@@ -1,0 +1,827 @@
+{% extends 'base.html' %}
+{% block title %}Reed Making Analytics{% endblock title %}
+{% block content %}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<div class="bg-white rounded-xl shadow-2xl p-8">
+    <h2 class="text-2xl font-bold text-center text-indigo-800 mb-6">Comprehensive Reed Making Analytics</h2>
+    
+    <!-- Analysis Controls -->
+    <div class="mb-6 p-4 bg-blue-50 rounded-lg border-l-4 border-blue-400">
+        <form method="get" class="space-y-4">
+            <!-- Instrument Selection -->
+            {% if available_instruments|length > 1 %}
+            <div class="flex items-center gap-4">
+                <label for="instrument-select" class="text-sm font-medium text-blue-900 w-24">Instrument:</label>
+                <select id="instrument-select" name="instrument" class="px-3 py-2 border border-blue-300 rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="">All Instruments</option>
+                    {% for instrument in available_instruments %}
+                    <option value="{{ instrument }}" {% if instrument == selected_instrument %}selected{% endif %}>
+                        {{ instrument }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endif %}
+            
+            <!-- Chart Parameter Selection -->
+            <div class="border-t pt-3 mt-3">
+                <h4 class="text-sm font-semibold text-blue-900 mb-3">Chart Parameters:</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="flex items-center gap-4">
+                        <label for="x-param-select" class="text-sm font-medium text-blue-900 w-16">X-axis:</label>
+                        <select id="x-param-select" name="x_param" class="px-3 py-2 border border-blue-300 rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 flex-1">
+                            {% for value, label in x_parameters %}
+                            <option value="{{ value }}" {% if value == selected_x_param %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <label for="y-param-select" class="text-sm font-medium text-blue-900 w-16">Y-axis:</label>
+                        <select id="y-param-select" name="y_param" class="px-3 py-2 border border-blue-300 rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 flex-1">
+                            {% for value, label in y_parameters %}
+                            <option value="{{ value }}" {% if value == selected_y_param %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex justify-center">
+                <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm font-medium">
+                    Update Analysis
+                </button>
+            </div>
+        </form>
+        {% if selected_instrument %}
+        <p class="text-xs text-blue-700 mt-2">
+            Currently analyzing: <strong>{{ selected_instrument }}</strong> data only
+        </p>
+        {% else %}
+        <p class="text-xs text-blue-700 mt-2">
+            Currently analyzing: <strong>All instruments</strong> (showing primary instrument data)
+        </p>
+        {% endif %}
+        
+        <!-- Debug info (remove in production) -->
+        <div class="text-xs text-gray-500 mt-2 p-2 bg-gray-100 rounded">
+            Debug: selected_instrument = "{{ selected_instrument|default:'None' }}"<br>
+            Available: {{ available_instruments|join:", "|default:"None" }}
+        </div>
+    </div>
+    
+    <!-- Data Sufficiency Warning -->
+    {% if not has_sufficient_data %}
+    <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
+        <div class="flex">
+            <div class="flex-shrink-0">
+                <svg class="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                </svg>
+            </div>
+            <div class="ml-3">
+                <p class="text-sm text-yellow-700">
+                    <strong>Note:</strong> Advanced analytics require at least 10 reeds for reliable results. 
+                    You currently have {{ total_reeds }} reed{{ total_reeds|pluralize }}. 
+                    Some statistical features may be limited.
+                </p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Advanced Analytics Availability -->
+    {% if not advanced_analytics.data_summary.advanced_analytics_available %}
+    <div class="bg-red-50 border-l-4 border-red-400 p-4 mb-6">
+        <div class="flex">
+            <div class="flex-shrink-0">
+                <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                </svg>
+            </div>
+            <div class="ml-3">
+                <p class="text-sm text-red-700">
+                    <strong>Advanced Analytics Unavailable:</strong> Statistical analysis libraries are not installed. 
+                    Some features will show basic statistics only. Run <code class="bg-red-100 px-2 py-1 rounded">pip install -r requirements.txt</code> to enable full analytics.
+                </p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Overview Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="bg-indigo-50 border-l-4 border-indigo-300 p-6 rounded">
+            <h3 class="text-lg font-semibold text-indigo-900 mb-2">Total Reeds</h3>
+            <p class="text-3xl font-bold text-indigo-800">{{ total_reeds }}</p>
+        </div>
+        
+        <div class="bg-green-50 border-l-4 border-green-300 p-6 rounded">
+            <h3 class="text-lg font-semibold text-green-900 mb-2">Favorite Brand</h3>
+            <p class="text-lg font-semibold text-green-800">
+                {% if cane_brand_stats %}
+                    {{ cane_brand_stats.0.cane_brand|default:"None" }}
+                {% else %}
+                    None
+                {% endif %}
+            </p>
+        </div>
+        
+        <div class="bg-blue-50 border-l-4 border-blue-300 p-6 rounded">
+            <h3 class="text-lg font-semibold text-blue-900 mb-2">Avg Quality</h3>
+            <p class="text-3xl font-bold text-blue-800">
+                {{ quality_stats.playing_ease|default:"--" }}/10
+            </p>
+        </div>
+        
+        <div class="bg-purple-50 border-l-4 border-purple-300 p-6 rounded">
+            <h3 class="text-lg font-semibold text-purple-900 mb-2">Improvement</h3>
+            <p class="text-2xl font-bold text-purple-800">
+                {% if advanced_analytics.reed_progression_analysis.improvement %}
+                    {% if advanced_analytics.reed_progression_analysis.improvement > 0 %}+{% endif %}{{ advanced_analytics.reed_progression_analysis.improvement }}
+                {% else %}--{% endif %}
+            </p>
+        </div>
+    </div>
+
+    <!-- Cane Brand Performance Analysis -->
+    {% if advanced_analytics.cane_brand_analysis.brand_performance %}
+    <div class="mb-8">
+        <h3 class="text-xl font-bold text-indigo-800 mb-4">Statistical Cane Brand Analysis 
+        {% if advanced_analytics.cane_brand_analysis.primary_instrument %}
+        ({{ advanced_analytics.cane_brand_analysis.primary_instrument }} Only)
+        {% endif %}
+        </h3>
+        
+        <!-- Debug info for cane brand analysis -->
+        <div class="text-xs text-gray-500 mb-2 p-2 bg-gray-100 rounded">
+            Debug: Analyzing {{ advanced_analytics.cane_brand_analysis.primary_instrument|default:"Unknown" }} - 
+            {{ advanced_analytics.cane_brand_analysis.brand_performance|length }} brands found
+        </div>
+        <div class="bg-gray-50 p-6 rounded-lg">
+            <!-- ANOVA Results -->
+            {% if advanced_analytics.cane_brand_analysis.anova_results %}
+            <div class="mb-4 p-4 bg-blue-50 rounded">
+                <h4 class="font-semibold text-blue-900 mb-2">Statistical Significance Test (ANOVA)</h4>
+                <p class="text-sm text-blue-800">
+                    <strong>F-statistic:</strong> {{ advanced_analytics.cane_brand_analysis.anova_results.f_statistic }}<br>
+                    <strong>P-value:</strong> {{ advanced_analytics.cane_brand_analysis.anova_results.p_value }}<br>
+                    <strong>Result:</strong> 
+                    {% if advanced_analytics.cane_brand_analysis.anova_results.significant %}
+                        <span class="text-green-600 font-semibold">Significant difference between brands (p < 0.05)</span>
+                    {% else %}
+                        <span class="text-gray-600">No significant difference between brands (p ≥ 0.05)</span>
+                    {% endif %}
+                </p>
+            </div>
+            {% endif %}
+            
+            <!-- Brand Performance Table -->
+            <div class="overflow-x-auto">
+                <table class="min-w-full table-auto">
+                    <thead>
+                        <tr class="bg-indigo-100 text-indigo-900">
+                            <th class="px-4 py-2 text-left">Brand</th>
+                            <th class="px-4 py-2 text-center">Count</th>
+                            <th class="px-4 py-2 text-center">Avg Quality</th>
+                            <th class="px-4 py-2 text-center">Playing Ease</th>
+                            <th class="px-4 py-2 text-center">Intonation</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for brand, data in advanced_analytics.cane_brand_analysis.brand_performance.items %}
+                        <tr class="border-b hover:bg-gray-50">
+                            <td class="px-4 py-2 font-medium">{{ brand }}</td>
+                            <td class="px-4 py-2 text-center">{{ data.count }}</td>
+                            <td class="px-4 py-2 text-center">
+                                <span class="{% if data.avg_quality >= 7 %}text-green-600 font-semibold{% elif data.avg_quality >= 5 %}text-yellow-600{% else %}text-red-600{% endif %}">
+                                    {{ data.avg_quality|floatformat:1 }}
+                                </span>
+                            </td>
+                            <td class="px-4 py-2 text-center">{{ data.avg_playing_ease|floatformat:1 }}</td>
+                            <td class="px-4 py-2 text-center">{{ data.avg_intonation|floatformat:1 }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Parameter Success Analysis -->
+    {% if advanced_analytics.parameter_success_analysis %}
+    <div class="mb-8">
+        <h3 class="text-xl font-bold text-indigo-800 mb-4">Parameter Optimization Analysis</h3>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            
+            <!-- Feature Importance -->
+            {% if advanced_analytics.parameter_success_analysis.feature_importance %}
+            <div class="bg-gray-50 p-6 rounded-lg">
+                <h4 class="font-semibold text-gray-900 mb-4">Most Important Factors (ML Analysis)</h4>
+                <div class="space-y-2">
+                    {% for feature in advanced_analytics.parameter_success_analysis.feature_importance %}
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm font-medium">{{ feature.feature|title }}</span>
+                        <div class="flex items-center">
+                            <div class="w-24 bg-gray-200 rounded-full h-2 mr-2">
+                                <div class="bg-indigo-600 h-2 rounded-full" style="width: {{ feature.importance|floatformat:2|floatformat:0 }}%"></div>
+                            </div>
+                            <span class="text-xs text-gray-600">{{ feature.importance|floatformat:3 }}</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                <p class="text-xs text-gray-500 mt-3">
+                    Model Accuracy: {{ advanced_analytics.parameter_success_analysis.model_score|floatformat:3 }}
+                </p>
+            </div>
+            {% endif %}
+            
+            <!-- Correlations -->
+            {% if advanced_analytics.parameter_success_analysis.correlations %}
+            <div class="bg-gray-50 p-6 rounded-lg">
+                <h4 class="font-semibold text-gray-900 mb-4">Quality Correlations</h4>
+                <div class="space-y-2">
+                    {% for param, corr in advanced_analytics.parameter_success_analysis.correlations.items %}
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm font-medium">{{ param|title }}</span>
+                        <span class="text-sm font-semibold {% if corr > 0.3 %}text-green-600{% elif corr < -0.3 %}text-red-600{% else %}text-gray-600{% endif %}">
+                            {{ corr|floatformat:3 }}
+                        </span>
+                    </div>
+                    {% endfor %}
+                </div>
+                <p class="text-xs text-gray-500 mt-3">
+                    Positive values indicate parameters that improve quality
+                </p>
+            </div>
+            {% endif %}
+            
+            <!-- Optimal Parameter Ranges -->
+            {% if advanced_analytics.parameter_success_analysis.optimal_ranges %}
+            <div class="bg-gray-50 p-6 rounded-lg">
+                <h4 class="font-semibold text-gray-900 mb-4">Optimal Parameter Ranges</h4>
+                <p class="text-sm text-gray-600 mb-3">Parameters used in your highest-rated reeds (8+ quality):</p>
+                <div class="space-y-2">
+                    {% for param, range in advanced_analytics.parameter_success_analysis.optimal_ranges.items %}
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm font-medium capitalize">{{ param|slice:"8:" }}</span>
+                        <div class="text-right">
+                            <span class="text-sm font-semibold text-green-600">{{ range.min }}-{{ range.max }}</span>
+                            <span class="text-xs text-gray-500 block">avg: {{ range.avg }}</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                <p class="text-xs text-gray-500 mt-3">
+                    Target these ranges for best results
+                </p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Reed Progression Analysis -->
+    {% if advanced_analytics.reed_progression_analysis %}
+    <div class="mb-8">
+        <h3 class="text-xl font-bold text-indigo-800 mb-4">Progress & Improvement Analysis</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            
+            <div class="bg-green-50 p-6 rounded-lg">
+                <h4 class="font-semibold text-green-900 mb-2">Early Period Average</h4>
+                <p class="text-2xl font-bold text-green-800">{{ advanced_analytics.reed_progression_analysis.early_avg }}/10</p>
+            </div>
+            
+            <div class="bg-blue-50 p-6 rounded-lg">
+                <h4 class="font-semibold text-blue-900 mb-2">Recent Period Average</h4>
+                <p class="text-2xl font-bold text-blue-800">{{ advanced_analytics.reed_progression_analysis.recent_avg }}/10</p>
+            </div>
+            
+            <div class="bg-purple-50 p-6 rounded-lg">
+                <h4 class="font-semibold text-purple-900 mb-2">Overall Improvement</h4>
+                <p class="text-2xl font-bold text-purple-800">
+                    {% if advanced_analytics.reed_progression_analysis.improvement > 0 %}+{% endif %}{{ advanced_analytics.reed_progression_analysis.improvement }}
+                </p>
+                <p class="text-sm text-purple-700">
+                    {% if advanced_analytics.reed_progression_analysis.improvement > 0 %}Improving{% elif advanced_analytics.reed_progression_analysis.improvement < 0 %}Declining{% else %}Stable{% endif %}
+                </p>
+            </div>
+        </div>
+        
+        <!-- Trend Analysis -->
+        {% if advanced_analytics.reed_progression_analysis.trend_analysis %}
+        <div class="mt-4 p-4 bg-gray-50 rounded-lg">
+            <h4 class="font-semibold text-gray-900 mb-2">Statistical Trend Analysis</h4>
+            <p class="text-sm text-gray-700">
+                <strong>Trend Slope:</strong> {{ advanced_analytics.reed_progression_analysis.trend_analysis.slope|floatformat:4 }}/month<br>
+                <strong>R-squared:</strong> {{ advanced_analytics.reed_progression_analysis.trend_analysis.r_squared|floatformat:3 }}<br>
+                <strong>Trend Direction:</strong> 
+                {% if advanced_analytics.reed_progression_analysis.trend_analysis.improving %}
+                    <span class="text-green-600 font-semibold">Improving over time</span>
+                {% else %}
+                    <span class="text-red-600">Declining over time</span>
+                {% endif %}
+                {% if advanced_analytics.reed_progression_analysis.trend_analysis.significant %}
+                    <span class="text-green-600">(Statistically significant)</span>
+                {% else %}
+                    <span class="text-gray-600">(Not statistically significant)</span>
+                {% endif %}
+            </p>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Usage Patterns Analysis -->
+    {% if advanced_analytics.usage_patterns_analysis %}
+    <div class="mb-8">
+        <h3 class="text-xl font-bold text-indigo-800 mb-4">Usage Patterns & Performance</h3>
+        
+        <!-- Usage Statistics -->
+        {% if advanced_analytics.usage_patterns_analysis.usage_stats %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div class="bg-blue-50 p-4 rounded-lg text-center">
+                <h4 class="font-semibold text-blue-900 mb-2">Avg Rehearsals</h4>
+                <p class="text-2xl font-bold text-blue-800">{{ advanced_analytics.usage_patterns_analysis.usage_stats.avg_rehearsals }}</p>
+            </div>
+            <div class="bg-green-50 p-4 rounded-lg text-center">
+                <h4 class="font-semibold text-green-900 mb-2">Avg Concerts</h4>
+                <p class="text-2xl font-bold text-green-800">{{ advanced_analytics.usage_patterns_analysis.usage_stats.avg_concerts }}</p>
+            </div>
+            <div class="bg-indigo-50 p-4 rounded-lg text-center">
+                <h4 class="font-semibold text-indigo-900 mb-2">Total Rehearsals</h4>
+                <p class="text-2xl font-bold text-indigo-800">{{ advanced_analytics.usage_patterns_analysis.usage_stats.total_rehearsals }}</p>
+            </div>
+            <div class="bg-purple-50 p-4 rounded-lg text-center">
+                <h4 class="font-semibold text-purple-900 mb-2">Total Concerts</h4>
+                <p class="text-2xl font-bold text-purple-800">{{ advanced_analytics.usage_patterns_analysis.usage_stats.total_concerts }}</p>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Global Quality Progression -->
+        {% if advanced_analytics.usage_patterns_analysis.impression_progression %}
+        <div class="bg-gray-50 p-6 rounded-lg">
+            <h4 class="font-semibold text-gray-900 mb-4">Reed Impression Evolution</h4>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {% if advanced_analytics.usage_patterns_analysis.impression_progression.global_quality_first_impression %}
+                <div class="text-center">
+                    <h5 class="text-sm font-medium text-gray-700 mb-1">1st Impression</h5>
+                    <p class="text-xl font-bold text-gray-800">{{ advanced_analytics.usage_patterns_analysis.impression_progression.global_quality_first_impression }}/10</p>
+                </div>
+                {% endif %}
+                {% if advanced_analytics.usage_patterns_analysis.impression_progression.global_quality_second_impression %}
+                <div class="text-center">
+                    <h5 class="text-sm font-medium text-gray-700 mb-1">2nd Impression</h5>
+                    <p class="text-xl font-bold text-gray-800">{{ advanced_analytics.usage_patterns_analysis.impression_progression.global_quality_second_impression }}/10</p>
+                </div>
+                {% endif %}
+                {% if advanced_analytics.usage_patterns_analysis.impression_progression.global_quality_third_impression %}
+                <div class="text-center">
+                    <h5 class="text-sm font-medium text-gray-700 mb-1">3rd Impression</h5>
+                    <p class="text-xl font-bold text-gray-800">{{ advanced_analytics.usage_patterns_analysis.impression_progression.global_quality_third_impression }}/10</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Reed Clustering Analysis -->
+    {% if advanced_analytics.clustering_analysis and not advanced_analytics.clustering_analysis.error %}
+    <div class="mb-8">
+        <h3 class="text-xl font-bold text-indigo-800 mb-4">Reed Type Classification (AI Clustering)</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {% for cluster_id, data in advanced_analytics.clustering_analysis.items %}
+            <div class="bg-gray-50 p-6 rounded-lg">
+                <h4 class="font-semibold text-gray-900 mb-2 capitalize">{{ cluster_id|title }}</h4>
+                <p class="text-sm text-gray-600 mb-3">{{ data.count }} reeds</p>
+                <div class="space-y-1 text-xs">
+                    <div class="flex justify-between">
+                        <span>Playing Ease:</span>
+                        <span class="font-semibold">{{ data.characteristics.playing_ease }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>Intonation:</span>
+                        <span class="font-semibold">{{ data.characteristics.intonation }}</span>
+                    </div>
+                </div>
+                <div class="mt-3 pt-2 border-t border-gray-200">
+                    <p class="text-sm font-semibold text-center">Overall: {{ data.avg_overall }}/10</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <p class="text-xs text-gray-500 mt-3">
+            AI clustering identifies different types of reeds based on their characteristics
+        </p>
+    </div>
+    {% endif %}
+
+    <!-- Specific Insights Section -->
+    {% if advanced_analytics.specific_insights.insights %}
+    <div class="mb-8">
+        <h3 class="text-xl font-bold text-indigo-800 mb-4">Specific Insights from Your Data</h3>
+        <div class="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-lg border-l-4 border-indigo-400">
+            <p class="text-sm text-indigo-700 mb-4">
+                <strong>Personalized recommendations</strong> based on analysis of your {{ total_reeds }} reeds:
+            </p>
+            <div class="space-y-3">
+                {% for insight in advanced_analytics.specific_insights.insights %}
+                <div class="flex items-start">
+                    <div class="flex-shrink-0 w-6 h-6 bg-indigo-100 rounded-full flex items-center justify-center mr-3 mt-0.5">
+                        <span class="text-indigo-600 font-bold text-sm">{{ forloop.counter }}</span>
+                    </div>
+                    <p class="text-indigo-800 font-medium">{{ insight }}</p>
+                </div>
+                {% endfor %}
+            </div>
+            <div class="mt-4 p-3 bg-indigo-100 rounded">
+                <p class="text-xs text-indigo-600">
+                    <strong>Pro Tip:</strong> These insights are generated from your actual reed-making data and can help guide your future cane selection and processing decisions.
+                </p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Correlation Analysis: Hardness vs Quality -->
+    {% if advanced_analytics.correlation_analysis.scatter_data %}
+    <div class="mb-8">
+        <h3 class="text-xl font-bold text-indigo-800 mb-4">{{ advanced_analytics.correlation_analysis.chart_config.title }}</h3>
+        {% if advanced_analytics.correlation_analysis.instrument_summary %}
+        <div class="mb-4 p-3 bg-blue-50 rounded text-sm">
+            <p class="text-blue-800">
+                <strong>Instrument Analysis:</strong> 
+                {% if selected_instrument %}
+                    Showing {{ selected_instrument }} data only ({{ advanced_analytics.correlation_analysis.sample_size }} reeds)
+                {% else %}
+                    Showing {{ advanced_analytics.correlation_analysis.instrument_summary.primary_instrument }} data 
+                    ({{ advanced_analytics.correlation_analysis.instrument_summary.instruments_analyzed }} of {{ advanced_analytics.correlation_analysis.instrument_summary.total_instruments }} instruments available)
+                {% endif %}
+            </p>
+            {% if advanced_analytics.correlation_analysis.instrument_summary.available_instruments|length > 1 and not selected_instrument %}
+            <p class="text-blue-700 text-xs mt-1">
+                Use the instrument selector above to analyze specific instruments: {{ advanced_analytics.correlation_analysis.instrument_summary.available_instruments|join:", " }}
+            </p>
+            {% endif %}
+        </div>
+        {% endif %}
+        <div class="bg-white p-6 rounded-lg shadow-md border">
+            <!-- Chart Container -->
+            <div class="mb-4" style="height: 400px;">
+                <canvas id="hardnessQualityChart"></canvas>
+            </div>
+            
+            <!-- Dot Size Legend -->
+            <div class="mb-4 p-3 bg-indigo-50 rounded-lg border">
+                <h4 class="text-sm font-semibold text-indigo-800 mb-2">Chart Legend</h4>
+                <div class="flex items-center gap-6 text-xs text-indigo-700">
+                    <div class="flex items-center gap-2">
+                        <span class="inline-block w-2 h-2 bg-indigo-400 rounded-full"></span>
+                        <span>Small dots = 1 reed</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="inline-block w-3 h-3 bg-indigo-500 rounded-full"></span>
+                        <span>Medium dots = 2-3 reeds</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="inline-block w-4 h-4 bg-indigo-600 rounded-full"></span>
+                        <span>Large dots = 4+ reeds</span>
+                    </div>
+                </div>
+                <p class="text-xs text-indigo-600 mt-2">Dot size shows how many reeds share similar hardness/quality values - larger dots indicate popular combinations</p>
+                <p class="text-xs text-indigo-600 mt-1">Large dots reveal your most frequently used hardness-quality combinations</p>
+            </div>
+            
+            <!-- Correlation Statistics -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                <div class="text-center p-3 bg-gray-50 rounded">
+                    <p class="text-sm text-gray-600">Sample Size</p>
+                    <p class="text-lg font-bold text-indigo-600">{{ advanced_analytics.correlation_analysis.sample_size }} reeds</p>
+                </div>
+                <div class="text-center p-3 bg-gray-50 rounded">
+                    <p class="text-sm text-gray-600">Correlation</p>
+                    <p class="text-lg font-bold {% if advanced_analytics.correlation_analysis.correlation_coefficient > 0.4 %}text-green-600{% elif advanced_analytics.correlation_analysis.correlation_coefficient < -0.4 %}text-red-600{% else %}text-yellow-600{% endif %}">
+                        {{ advanced_analytics.correlation_analysis.correlation_coefficient|floatformat:3 }}
+                    </p>
+                </div>
+                <div class="text-center p-3 bg-gray-50 rounded">
+                    <p class="text-sm text-gray-600">Strength</p>
+                    <p class="text-lg font-bold text-gray-700">{{ advanced_analytics.correlation_analysis.correlation_strength }}</p>
+                </div>
+            </div>
+            
+            <!-- Insights -->
+            {% if advanced_analytics.correlation_analysis.insights %}
+            <div class="bg-blue-50 p-4 rounded-lg">
+                <h4 class="font-semibold text-blue-800 mb-2">Key Insights:</h4>
+                <div class="space-y-2">
+                    {% for insight in advanced_analytics.correlation_analysis.insights %}
+                    <div class="flex items-start">
+                        <span class="text-blue-600 mr-2">•</span>
+                        <p class="text-blue-700 text-sm">{{ insight }}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <script>
+    // Create scatter plot for hardness vs quality
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('🔍 Starting chart creation...');
+        
+        // Check if Chart.js is loaded
+        if (typeof Chart === 'undefined') {
+            console.error('❌ Chart.js library not loaded!');
+            const container = document.getElementById('hardnessQualityChart').parentElement;
+            container.innerHTML = '<div class="bg-red-50 p-4 rounded"><p class="text-red-700">❌ Chart.js library failed to load. Please refresh the page.</p></div>';
+            return;
+        }
+        console.log('✅ Chart.js library loaded');
+        
+        try {
+            const ctx = document.getElementById('hardnessQualityChart');
+            if (!ctx) {
+                console.error('❌ Canvas element not found');
+                return;
+            }
+            console.log('✅ Canvas found');
+            
+            // Parse and validate data
+            let scatterData;
+            try {
+                scatterData = {{ advanced_analytics.correlation_analysis.scatter_data|safe }};
+                console.log('📊 Raw data:', scatterData);
+                console.log('📊 Data type:', typeof scatterData);
+                console.log('📊 Data length:', scatterData ? scatterData.length : 'N/A');
+            } catch (e) {
+                console.error('❌ Error parsing scatter data:', e);
+                throw new Error('Failed to parse correlation data');
+            }
+            
+            if (!scatterData || !Array.isArray(scatterData) || scatterData.length === 0) {
+                console.error('❌ No valid scatter data available');
+                const container = document.getElementById('hardnessQualityChart').parentElement;
+                container.innerHTML = '<div class="bg-yellow-50 p-4 rounded"><p class="text-yellow-700">⚠️ No correlation data available for chart display.</p></div>';
+                return;
+            }
+            
+            console.log('✅ Data validated:', scatterData.length, 'points');
+            
+            // Group data by position to count overlapping points
+            const positionGroups = {};
+            scatterData.forEach((point, index) => {
+                const xValue = parseFloat(point.x_value);
+                const yValue = parseFloat(point.y_value);
+                
+                // Validate point data
+                if (isNaN(xValue) || isNaN(yValue)) {
+                    console.warn('⚠️ Skipping invalid point:', point);
+                    return;
+                }
+                
+                // Create position key (rounded for grouping similar positions)
+                let roundedX, roundedY;
+                
+                // Different rounding based on parameter types
+                if (point.x_param === 'hardness' || point.x_param === 'density' || point.x_param === 'density_auto') {
+                    roundedX = Math.round(xValue * 2) / 2; // Round to nearest 0.5
+                } else if (point.x_param === 'diameter') {
+                    roundedX = Math.round(xValue); // Round to nearest integer
+                } else {
+                    roundedX = xValue; // Keep as-is for categorical
+                }
+                
+                // Y-axis rounding (usually quality metrics 0-10)
+                roundedY = Math.round(yValue); // Round to nearest 1
+                
+                const positionKey = `${roundedX}-${roundedY}`;
+                
+                if (!positionGroups[positionKey]) {
+                    positionGroups[positionKey] = {
+                        x_value: roundedX,
+                        y_value: roundedY,
+                        count: 0,
+                        points: [],
+                        brands: {}
+                    };
+                }
+                
+                positionGroups[positionKey].count++;
+                positionGroups[positionKey].points.push(point);
+                
+                const brand = point.cane_brand || 'Unknown';
+                if (!positionGroups[positionKey].brands[brand]) {
+                    positionGroups[positionKey].brands[brand] = [];
+                }
+                positionGroups[positionKey].brands[brand].push(point);
+            });
+            
+            console.log('📊 Position groups created:', Object.keys(positionGroups).length, 'unique positions');
+            
+            // Group data by cane brand for different colors
+            const brandColors = {
+                'Rigotti': 'rgb(59, 130, 246)',      // Blue
+                'HO': 'rgb(16, 185, 129)',           // Green  
+                'Haynes': 'rgb(245, 101, 101)',      // Red
+                'Other': 'rgb(156, 163, 175)',       // Gray
+                'Vandoren': 'rgb(139, 92, 246)',     // Purple
+                'Unknown': 'rgb(107, 114, 128)'      // Default gray
+            };
+            
+            const datasets = {};
+            
+            // Process each position group
+            Object.values(positionGroups).forEach(group => {
+                // For each brand in this position group
+                Object.entries(group.brands).forEach(([brand, brandPoints]) => {
+                    if (!datasets[brand]) {
+                        datasets[brand] = {
+                            label: brand,
+                            data: [],
+                            backgroundColor: brandColors[brand] || brandColors['Unknown'],
+                            borderColor: brandColors[brand] || brandColors['Unknown'],
+                            borderWidth: 1,
+                            pointRadius: [], // Will be set per point
+                            pointHoverRadius: [] // Will be set per point
+                        };
+                    }
+                    
+                    // Calculate dot size based on total count at this position (all brands combined)
+                    const baseDotSize = 4;
+                    const maxDotSize = 20;
+                    const maxCount = Math.max(...Object.values(positionGroups).map(g => g.count));
+                    const dotSize = baseDotSize + (group.count / maxCount) * (maxDotSize - baseDotSize);
+                    const hoverDotSize = dotSize + 3;
+                    
+                    // Add one point for this brand at this position
+                    datasets[brand].data.push({
+                        x: group.x_value,
+                        y: group.y_value,
+                        pointData: {
+                            total_count: group.count,
+                            brand_count: brandPoints.length,
+                            reed_ids: brandPoints.map(p => p.reed_id).join(', '),
+                            all_brands: Object.keys(group.brands).join(', '),
+                            x_display: group.points[0].x_display || group.x_value,
+                            y_display: group.y_value
+                        }
+                    });
+                    
+                    // Add corresponding radius for this point
+                    datasets[brand].pointRadius.push(dotSize);
+                    datasets[brand].pointHoverRadius.push(hoverDotSize);
+                });
+            });
+            
+            console.log('✅ Datasets created:', Object.keys(datasets));
+            console.log('📊 Dataset details:', datasets);
+            
+            // Verify we have data to chart
+            const totalPoints = Object.values(datasets).reduce((sum, dataset) => sum + dataset.data.length, 0);
+            if (totalPoints === 0) {
+                console.error('❌ No valid data points after processing');
+                const container = document.getElementById('hardnessQualityChart').parentElement;
+                container.innerHTML = '<div class="bg-yellow-50 p-4 rounded"><p class="text-yellow-700">⚠️ No valid data points for chart display.</p></div>';
+                return;
+            }
+            
+            console.log(`✅ Ready to chart ${totalPoints} points`);
+            
+            const chart = new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: Object.values(datasets)
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                title: function(context) {
+                                    const point = context[0];
+                                    const pointData = datasets[point.dataset.label].data[point.dataIndex].pointData;
+                                    return `${pointData.total_count} Reed${pointData.total_count > 1 ? 's' : ''} at this position`;
+                                },
+                                label: function(context) {
+                                    const pointData = datasets[context.dataset.label].data[context.dataIndex].pointData;
+                                    const xLabel = '{{ advanced_analytics.correlation_analysis.chart_config.x_label }}';
+                                    const yLabel = '{{ advanced_analytics.correlation_analysis.chart_config.y_label }}';
+                                    return [
+                                        `${context.dataset.label}: ${pointData.brand_count} reed${pointData.brand_count > 1 ? 's' : ''}`,
+                                        `${xLabel}: ${pointData.x_display}, ${yLabel}: ${pointData.y_display}`
+                                    ];
+                                },
+                                afterLabel: function(context) {
+                                    const pointData = datasets[context.dataset.label].data[context.dataIndex].pointData;
+                                    const lines = [
+                                        `Reed IDs: ${pointData.reed_ids}`,
+                                        ''
+                                    ];
+                                    if (pointData.total_count > pointData.brand_count) {
+                                        lines.push(`Other brands at this position: ${pointData.all_brands.replace(context.dataset.label, '').replace(/^, |, $/g, '')}`);
+                                        lines.push('');
+                                    }
+                                    lines.push('Dot size = Number of reeds (larger = more reeds)');
+                                    return lines;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            display: true,
+                            title: {
+                                display: true,
+                                text: '{{ advanced_analytics.correlation_analysis.chart_config.x_label }}'
+                            }
+                        },
+                        y: {
+                            display: true,
+                            title: {
+                                display: true,
+                                text: '{{ advanced_analytics.correlation_analysis.chart_config.y_label }}'
+                            },
+                            {% if advanced_analytics.correlation_analysis.chart_config.y_scale_0_to_10 %}min: 0,
+                            max: 10{% else %}beginAtZero: true{% endif %}
+                        }
+                    }
+                }
+            });
+            
+            console.log('🎉 Chart created successfully!', chart);
+            
+        } catch (error) {
+            console.error('❌ Error creating chart:', error);
+            
+            // Show detailed error message
+            const container = document.getElementById('hardnessQualityChart').parentElement;
+            container.innerHTML = `
+                <div class="bg-red-50 p-4 rounded">
+                    <p class="text-red-700 font-semibold">❌ Chart Error</p>
+                    <p class="text-red-600 text-sm mt-2">Error: ${error.message}</p>
+                    <p class="text-red-600 text-sm mt-1">Check browser console (F12) for detailed error information.</p>
+                </div>
+            `;
+        }
+    });
+    </script>
+    {% elif advanced_analytics.correlation_analysis.error and advanced_analytics.correlation_analysis.available_instruments %}
+    <!-- Show error message with instrument selection info -->
+    <div class="mb-8">
+        <h3 class="text-xl font-bold text-indigo-800 mb-4">Correlation Analysis: Hardness vs Quality</h3>
+        <div class="bg-yellow-50 p-4 rounded-lg border-l-4 border-yellow-400">
+            <p class="text-yellow-800 font-semibold">{{ advanced_analytics.correlation_analysis.error }}</p>
+            {% if advanced_analytics.correlation_analysis.available_instruments %}
+            <p class="text-yellow-700 text-sm mt-2">
+                Available instruments: {{ advanced_analytics.correlation_analysis.available_instruments|join:", " }}
+            </p>
+            <p class="text-yellow-700 text-xs mt-1">
+                Try selecting a specific instrument above, or ensure you have enough data points with both hardness and quality ratings.
+            </p>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Traditional Monthly Activity (kept for continuity) -->
+    {% if monthly_stats %}
+    <div class="mb-8">
+        <h3 class="text-xl font-bold text-indigo-800 mb-4">Reed Creation Activity (Last 6 Months)</h3>
+        <div class="bg-gray-50 p-4 rounded">
+            {% for month in monthly_stats %}
+            <div class="flex justify-between items-center py-2 border-b border-gray-200 last:border-b-0">
+                <span class="font-medium">{{ month.month }}</span>
+                <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm">{{ month.count }} reeds</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Back Button -->
+    <div class="text-center">
+        <a href="{% url 'account:account' %}" class="bg-indigo-800 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-900 transition-all">
+            Back to Account Dashboard
+        </a>
+    </div>
+</div>
+
+{% endblock content %}

@@ -1,0 +1,1087 @@
+{% extends 'base.html' %}
+{% load widget_tweaks %}
+{% load custom_filters %}
+{% block title %}Batch Data Entry{% endblock title %}
+{% block content %}
+
+<style>
+/* Remove borders from all input and select elements inside table cells */
+#batch-rows input,
+#batch-rows select,
+#batch-rows textarea {
+  border: none !important;
+  outline: none;
+}
+
+/* Add subtle focus indicator */
+#batch-rows input:focus,
+#batch-rows select:focus,
+#batch-rows textarea:focus {
+  background-color: #f0f4ff;
+  box-shadow: inset 0 0 0 1px #818cf8;
+}
+
+/* Checkbox styling for parameter selector */
+#parameter-selector input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  margin-right: 8px;
+  accent-color: #4f46e5;
+  flex-shrink: 0;
+  border: 2px solid #6b7280;
+  border-radius: 3px;
+  -webkit-appearance: checkbox;
+  appearance: checkbox;
+}
+
+#parameter-selector input[type="checkbox"]:checked {
+  background-color: #4f46e5;
+  border-color: #4f46e5;
+}
+
+#parameter-selector input[type="checkbox"]:focus {
+  outline: 2px solid #818cf8;
+  outline-offset: 2px;
+}
+</style>
+
+<div class="bg-white rounded-xl shadow-2xl p-8">
+    <h2 class="text-2xl font-bold text-center text-indigo-800 mb-6">Batch Data Entry</h2>
+    
+    <!-- Display messages -->
+    {% if messages %}
+      {% for message in messages %}
+        <div class="mb-4 p-4 rounded-lg {% if message.tags == 'success' %}bg-green-100 border border-green-400 text-green-700{% elif message.tags == 'error' %}bg-red-100 border border-red-400 text-red-700{% elif message.tags == 'warning' %}bg-yellow-100 border border-yellow-400 text-yellow-700{% else %}bg-blue-100 border border-blue-400 text-blue-700{% endif %}">
+          {{ message }}
+        </div>
+      {% endfor %}
+    {% endif %}
+
+
+    <form action="" method="POST">
+      {% csrf_token %}
+      {{ formset.management_form }}
+      
+      <!-- ✅ パラメータ選択＆並び替えUI -->
+      <div class="mb-6">
+        <label class="block font-semibold text-indigo-900 mb-2">Select parameter you would like to input</label>
+        
+        
+<ul id="parameter-selector" class="flex flex-wrap gap-2 p-2 border rounded-lg bg-gray-50">
+  {% for up in user_params %}
+    {# Hide M1 and M2 from checkbox list - they're auto-included with density_auto #}
+    {% if up.parameter.name != 'm1' and up.parameter.name != 'm2' %}
+      {% if up.parameter.name|is_evaluation_field %}
+      <li class="flex items-center bg-blue-100 border border-blue-300 rounded px-2 py-1 shadow-sm cursor-move"
+          data-field="{{ up.parameter.name }}">
+        <input type="checkbox" class="param-toggle" data-field="{{ up.parameter.name }}"
+               {% if up.active %}checked{% endif %}>
+        <span class="text-sm text-blue-800">📊 {{ up.parameter.display_name }}</span>
+      </li>
+      {% else %}
+      <li class="flex items-center bg-white border rounded px-2 py-1 shadow-sm cursor-move"
+          data-field="{{ up.parameter.name }}">
+        <input type="checkbox" class="param-toggle" data-field="{{ up.parameter.name }}"
+               {% if up.active %}checked{% endif %}>
+        <span class="text-sm text-gray-700">{{ up.parameter.display_name }}</span>
+      </li>
+      {% endif %}
+    {% endif %}
+  {% endfor %}
+</ul>
+
+        <p class="text-xs text-gray-500 mt-1">Check to display, drag to reorder. Blue items with 📊 are evaluation fields.</p>
+      </div>
+      
+      <!-- Auto-fill notice -->
+      <div class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+        <div class="flex items-center">
+          <span class="text-blue-600 mr-2">💡</span>
+          <p class="text-sm text-blue-800">
+            <strong>Batch Auto-fill:</strong> When you select Instrument, Cane Brand, Gouging Machine, Shaper, or Shaper Model in any row, 
+            you'll be asked if you want to apply the same value to all other rows.
+          </p>
+        </div>
+      </div>
+      
+      <!-- Reed ID requirement notice -->
+      <div class="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+        <div class="flex items-center">
+          <span class="text-yellow-600 mr-2">⚠️</span>
+          <p class="text-sm text-yellow-800">
+            <strong>Reed ID Required:</strong> Only rows with Reed IDs will be saved. Rows without Reed IDs will be automatically ignored.
+          </p>
+        </div>
+      </div>
+
+      <!-- ✅ Cane 数入力 -->
+      <div class="mb-4">
+        <label for="num_can" class="block font-medium text-indigo-900 mb-1 text-sm">Number of Reeds</label>
+        <div class="flex flex-wrap items-center gap-1 sm:gap-2">
+          <input type="number" id="num_can" placeholder="Max 50" name="num_can"
+                value="{{ num_can|default:5 }}" min="1" max="50"
+                class="w-16 sm:w-20 px-2 py-1 text-sm border rounded">
+          <button type="button" id="update_rows" 
+                  class="bg-blue-600 text-white px-3 py-1 text-sm rounded hover:bg-blue-700 transition-colors">
+            Update
+          </button>
+        </div>
+      </div>
+
+      <!-- ✅ Load data from Reed ID Range -->
+      <div class="mb-4">
+        <label class="block font-medium text-indigo-900 mb-1 text-sm">Load Existing Reeds</label>
+        
+        <!-- Reed ID Range -->
+        <div class="flex flex-wrap items-center gap-1 sm:gap-2">
+          <input type="text" id="reed_id_from" placeholder="e.g.) M1"
+                class="w-16 sm:w-20 px-2 py-1 text-sm border rounded">
+          <span class="text-gray-500 text-sm">to</span>
+          <input type="text" id="reed_id_to" placeholder="M3"
+                class="w-16 sm:w-20 px-2 py-1 text-sm border rounded">
+          <button type="button" id="load_reed_range" 
+                  class="bg-blue-600 text-white px-3 py-1 text-sm rounded hover:bg-blue-700 transition-colors">
+            Load
+          </button>
+        </div>
+      </div>
+
+      <!-- ✅ データ入力テーブル -->
+      <div class="overflow-x-auto mb-6">
+        <table class="min-w-full table-auto border-collapse">
+          <thead>
+            <tr class="bg-indigo-100 text-indigo-900 font-semibold">
+              <th class="border px-2 py-1">#</th>
+              <!-- DEBUG: Fields in formset: {% for field in formset.empty_form.visible_fields %}{{ field.name }}, {% endfor %} -->
+              <!-- DEBUG: All field names and widgets: {% for field in formset.empty_form.visible_fields %}{{ field.name }}({{ field.widget.input_type|default:"unknown" }}), {% endfor %} -->
+              <!-- DEBUG: Total fields in form: {{ formset.empty_form.fields|length }}, Visible: {% for field in formset.empty_form.visible_fields %}{{ field.name }}, {% endfor %} -->
+              {% for field in formset.empty_form.visible_fields %}
+                {% if field.name == 'cane_brand' %}
+                <th class="border px-2 py-1 relative" data-field="{{ field.name }}">
+                  <div id="cane-brand-header-container" class="relative">
+                    {{ field.label }}
+                    <!-- Tooltip for Cane Brand Header -->
+                    <div id="cane-brand-header-tooltip" class="absolute left-full ml-2 top-0 w-80 p-4 bg-white text-indigo-800 text-sm shadow-xl rounded-lg border border-indigo-200 z-50 opacity-0 invisible transition-all duration-300 pointer-events-none">
+                      <h3 class="font-bold mb-2 text-indigo-900">Can't find your cane maker?</h3>
+                      <p class="mb-2">If you cannot find your cane maker in the list, please <a href="{% url 'contact:contact' %}" class="text-indigo-600 underline hover:text-indigo-800">contact us</a>, and we will immediately add the cane maker's name to our database.</p>
+                    </div>
+                  </div>
+                </th>
+                {% else %}
+                <th class="border px-2 py-1" data-field="{{ field.name }}">{{ field.label }}</th>
+                {% endif %}
+              {% endfor %}
+            </tr>
+          </thead>
+          <tbody id="batch-rows">
+            {% for form in formset %}
+              <tr class="border">
+                <td class="border px-2 py-1">{{ forloop.counter }}</td>
+                {% for field in form.visible_fields %}
+                  {% if field.name == 'cane_brand' %}
+                  <td class="border px-2 py-1 relative" data-field="{{ field.name }}">
+                    <div class="cane-brand-cell-container relative">
+                      {{ field|add_class:"w-full px-2 py-1 border-0 focus:outline-none focus:ring-1 focus:ring-indigo-300" }}
+                      {% if field.errors %}
+                        <div class="text-red-500 text-xs mt-1">
+                          {% for error in field.errors %}
+                            {{ error }}
+                          {% endfor %}
+                        </div>
+                      {% endif %}
+                      <!-- Tooltip for individual Cane Brand cells -->
+                      <div class="cane-brand-cell-tooltip absolute left-full ml-2 top-0 w-80 p-4 bg-white text-indigo-800 text-sm shadow-xl rounded-lg border border-indigo-200 z-50 opacity-0 invisible transition-all duration-300 pointer-events-none">
+                        <h3 class="font-bold mb-2 text-indigo-900">Can't find your cane maker?</h3>
+                        <p class="mb-2">If you cannot find your cane maker in the list, please <a href="{% url 'contact:contact' %}" class="text-indigo-600 underline hover:text-indigo-800">contact us</a>, and we will immediately add the cane maker's name to our database.</p>
+                      </div>
+                    </div>
+                  </td>
+                  {% else %}
+                  <td class="border px-2 py-1" data-field="{{ field.name }}">
+                    {{ field|add_class:"w-full px-2 py-1 border-0 focus:outline-none focus:ring-1 focus:ring-indigo-300" }}
+                    {% if field.errors %}
+                      <div class="text-red-500 text-xs mt-1">
+                        {% for error in field.errors %}
+                          {{ error }}
+                        {% endfor %}
+                      </div>
+                    {% endif %}
+                  </td>
+                  {% endif %}
+                {% endfor %}
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="20" class="border px-4 py-8 text-center text-gray-500">
+                  No rows to display. Please enter a number of canes and click "Update Rows".
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      
+      <!-- Display formset non-field errors -->
+      {% if formset.non_form_errors %}
+        <div class="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
+          <strong>Form Errors:</strong>
+          {% for error in formset.non_form_errors %}
+            <div>{{ error }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      <div class="flex justify-end mt-6">
+        <button type="submit" id="submit-batch-btn"
+                class="bg-indigo-800 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-900 transition-all">
+          Submit Batch
+        </button>
+      </div>
+        </form>
+</div>
+<!-- Add bottom spacing for comfortable scrolling -->
+<div class="h-20"></div>
+
+<!-- ✅ Back to Top floating button -->
+<button id="back-to-top" 
+        class="fixed bottom-6 right-6 bg-indigo-600 text-white p-3 rounded-full shadow-lg hover:bg-indigo-700 transition-all opacity-0 invisible z-20">
+  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+  </svg>
+</button>
+
+<!-- ✅ SortableJS CDN -->
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  // Prevent multiple initializations
+  if (window.batchAddInitialized) {
+    console.log("Batch add already initialized, skipping");
+    return;
+  }
+  window.batchAddInitialized = true;
+  
+  const table = document.querySelector("table");
+  const selector = document.getElementById("parameter-selector");
+
+  // ✅ 列の表示/非表示
+  function toggleColumn(field, show) {
+    const cells = table.querySelectorAll(`[data-field="${field}"]`);
+    console.log(`Toggling column ${field} to ${show ? 'visible' : 'hidden'}, found ${cells.length} cells`);
+    
+    // If no cells found, don't try to toggle
+    if (cells.length === 0) {
+      console.warn(`No cells found for field ${field}`);
+      return;
+    }
+    
+    if (show && cells.length > 0) {
+      // Debug: check what's in the first few cells
+      cells.forEach((td, index) => {
+        if (index < 3) { // Only log first 3 cells
+          const input = td.querySelector('input, select, textarea');
+          console.log(`Cell ${index} for ${field}:`, td.innerHTML.slice(0, 100));
+          if (input) {
+            console.log(`  Input value:`, input.value, `Name:`, input.name, `Type:`, input.type, `Disabled:`, input.disabled);
+          } else {
+            console.log(`  NO INPUT FOUND! innerHTML:`, td.innerHTML);
+          }
+        }
+      });
+    }
+    
+    cells.forEach(td => {
+      td.style.display = show ? "" : "none";
+    });
+  }
+
+  // Apply initial column visibility and add event listeners
+  const toggles = document.querySelectorAll(".param-toggle");
+  console.log("Found", toggles.length, "parameter toggles");
+  
+  // Debug: Log all available form fields vs parameter toggles
+  const formFields = [];
+  const formset_fields = document.querySelectorAll('th[data-field]');
+  formset_fields.forEach(th => formFields.push(th.dataset.field));
+  console.log("Form fields available:", formFields);
+  
+  const toggleFields = [];
+  toggles.forEach(toggle => toggleFields.push(toggle.dataset.field));
+  console.log("Parameter toggles:", toggleFields);
+  
+  // Check for mismatches
+  const missingFields = toggleFields.filter(field => !formFields.includes(field));
+  console.log("Missing form fields:", missingFields);
+  
+  toggles.forEach(cb => {
+    console.log("Setting up toggle for:", cb.dataset.field, "checked:", cb.checked);
+    
+    // Add change event listener first
+    cb.addEventListener("change", () => {
+      console.log("Toggle changed:", cb.dataset.field, "to:", cb.checked);
+      
+      // Handle automatic field relationships
+      if (cb.dataset.field === "gouging_machine") {
+        console.log("Gouging machine toggled to:", cb.checked);
+        const bedDiameterToggle = document.querySelector('.param-toggle[data-field="bed_diameter"]');
+        const bladeDiameterToggle = document.querySelector('.param-toggle[data-field="blade_diameter"]');
+        console.log("Found bed diameter toggle:", !!bedDiameterToggle);
+        console.log("Found blade diameter toggle:", !!bladeDiameterToggle);
+        
+        if (cb.checked) {
+          // When gouging_machine is checked, auto-check related fields
+          if (bedDiameterToggle) {
+            console.log("Auto-checking bed_diameter");
+            bedDiameterToggle.checked = true;
+            toggleColumn("bed_diameter", true);
+          }
+          if (bladeDiameterToggle) {
+            console.log("Auto-checking blade_diameter");
+            bladeDiameterToggle.checked = true;
+            toggleColumn("blade_diameter", true);
+          }
+        } else {
+          // When gouging_machine is unchecked, auto-uncheck related fields
+          if (bedDiameterToggle) {
+            console.log("Auto-unchecking bed_diameter");
+            bedDiameterToggle.checked = false;
+            toggleColumn("bed_diameter", false);
+          }
+          if (bladeDiameterToggle) {
+            console.log("Auto-unchecking blade_diameter");
+            bladeDiameterToggle.checked = false;
+            toggleColumn("blade_diameter", false);
+          }
+        }
+      }
+      
+      if (cb.dataset.field === "shaper") {
+        const shaperModelToggle = document.querySelector('.param-toggle[data-field="shaper_model"]');
+        if (cb.checked) {
+          // When shaper is checked, auto-check shaper_model
+          if (shaperModelToggle) {
+            shaperModelToggle.checked = true;
+            toggleColumn("shaper_model", true);
+          }
+        } else {
+          // When shaper is unchecked, auto-uncheck shaper_model
+          if (shaperModelToggle) {
+            shaperModelToggle.checked = false;
+            toggleColumn("shaper_model", false);
+          }
+        }
+      }
+      
+      toggleColumn(cb.dataset.field, cb.checked);
+      saveSettings();
+    });
+  });
+  
+  // Handle automatic field relationships (same as in forms.py)
+  function updateRelatedFields() {
+    const gougingToggle = document.querySelector('.param-toggle[data-field="gouging_machine"]');
+    const bedDiameterToggle = document.querySelector('.param-toggle[data-field="bed_diameter"]');
+    const bladeDiameterToggle = document.querySelector('.param-toggle[data-field="blade_diameter"]');
+    
+    const shaperToggle = document.querySelector('.param-toggle[data-field="shaper"]');
+    const shaperModelToggle = document.querySelector('.param-toggle[data-field="shaper_model"]');
+    
+    console.log("Checking automatic relationships:");
+    console.log("  Gouging machine checked:", gougingToggle ? gougingToggle.checked : "not found");
+    console.log("  Shaper checked:", shaperToggle ? shaperToggle.checked : "not found");
+    
+    // If gouging_machine is checked, auto-check bed and blade diameter
+    if (gougingToggle && gougingToggle.checked) {
+      console.log("  Auto-checking bed and blade diameter");
+      if (bedDiameterToggle) bedDiameterToggle.checked = true;
+      if (bladeDiameterToggle) bladeDiameterToggle.checked = true;
+    }
+    
+    // If shaper is checked, auto-check shaper_model
+    if (shaperToggle && shaperToggle.checked) {
+      console.log("  Auto-checking shaper model");
+      if (shaperModelToggle) shaperModelToggle.checked = true;
+    }
+  }
+  
+  // Handle automatic field relationships for parent fields
+  function handleAutoRelationships() {
+    console.log("=== Handling Auto Relationships ===");
+    
+    const gougingToggle = document.querySelector('.param-toggle[data-field="gouging_machine"]');
+    const shaperToggle = document.querySelector('.param-toggle[data-field="shaper"]');
+    
+    if (gougingToggle && gougingToggle.checked) {
+      console.log("Gouging machine is checked, auto-checking related fields");
+      const bedToggle = document.querySelector('.param-toggle[data-field="bed_diameter"]');
+      const bladeToggle = document.querySelector('.param-toggle[data-field="blade_diameter"]');
+      if (bedToggle) {
+        console.log("  Checking bed_diameter");
+        bedToggle.checked = true;
+      }
+      if (bladeToggle) {
+        console.log("  Checking blade_diameter");
+        bladeToggle.checked = true;
+      }
+    }
+    
+    if (shaperToggle && shaperToggle.checked) {
+      console.log("Shaper is checked, auto-checking shaper_model");
+      const shaperModelToggle = document.querySelector('.param-toggle[data-field="shaper_model"]');
+      if (shaperModelToggle) {
+        console.log("  Checking shaper_model");
+        shaperModelToggle.checked = true;
+      }
+    }
+    
+    console.log("=== Auto Relationships Complete ===");
+  }
+  
+  // Apply initial visibility after handling auto relationships
+  function applyInitialVisibility() {
+    console.log("=== Applying Initial Visibility ===");
+    toggles.forEach(cb => {
+      console.log("Applying initial visibility for:", cb.dataset.field, "checked:", cb.checked);
+      toggleColumn(cb.dataset.field, cb.checked);
+    });
+    console.log("=== Initial Visibility Complete ===");
+  }
+  
+  // Handle auto relationships first, then apply visibility
+  setTimeout(() => {
+    handleAutoRelationships();
+    setTimeout(applyInitialVisibility, 50);
+  }, 100);
+
+
+  // ✅ 並べ替え
+  new Sortable(selector, {
+    animation: 150,
+    onEnd: saveSettings
+  });
+
+  function reorderColumns(order) {
+    const rows = table.querySelectorAll("tr");
+    rows.forEach(row => {
+      const cells = Array.from(row.querySelectorAll("th, td"));
+      const firstCell = cells.shift(); // #列は固定
+      const sorted = order.map(f => cells.find(c => c.dataset.field === f));
+      row.replaceChildren(firstCell, ...sorted);
+    });
+  }
+
+  // ✅ CSRF Cookie function
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== "") {
+      const cookies = document.cookie.split(";");
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.startsWith(name + "=")) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+  const csrftoken = getCookie("csrftoken");
+
+  function saveSettings() {
+    const order = [...selector.querySelectorAll("li")].map((li, index) => ({
+      field: li.dataset.field,
+      active: li.querySelector(".param-toggle").checked,
+      order: index,
+    }));
+
+    console.log("Saving settings:", order);
+
+    fetch("{% url 'reeds:save_parameter_settings' %}", {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": csrftoken,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(order),
+    })
+    .then(r => {
+      console.log("Save response status:", r.status);
+      return r.json();
+    })
+    .then(data => {
+      console.log("Save response data:", data);
+      if (data.success) {
+        reorderColumns(order.map(o => o.field));
+      }
+    })
+    .catch(error => {
+      console.error("Save settings error:", error);
+    });
+  }
+
+  // ✅ Auto-calculate density for each row
+  function attachDensityCalculation() {
+    document.querySelectorAll("#batch-rows tr").forEach(function(row) {
+      const m1 = row.querySelector(".m1");
+      const m2 = row.querySelector(".m2");
+      const density = row.querySelector(".density-auto");
+
+      if (!m1 || !m2 || !density) return;
+
+      function updateDensity() {
+        const m1Val = parseFloat(m1.value);
+        const m2Val = parseFloat(m2.value);
+        if (!isNaN(m1Val) && !isNaN(m2Val) && m1Val + m2Val !== 0) {
+          density.value = (m1Val / (m1Val + m2Val)).toFixed(4);
+        } else {
+          density.value = "";
+        }
+      }
+
+      // Remove existing event listeners to avoid duplicates
+      m1.removeEventListener("input", updateDensity);
+      m2.removeEventListener("input", updateDensity);
+      
+      // Add event listeners
+      m1.addEventListener("input", updateDensity);
+      m2.addEventListener("input", updateDensity);
+    });
+  }
+
+  // Initial attachment
+  attachDensityCalculation();
+  
+  // Function to check if user has entered any data in the form
+  function checkForExistingData() {
+    const batchRows = document.querySelectorAll("#batch-rows tr");
+    
+    // Check each row for any non-empty input values
+    for (let row of batchRows) {
+      const inputs = row.querySelectorAll("input, select, textarea");
+      for (let input of inputs) {
+        // Skip hidden inputs and check for actual user input
+        if (input.type !== 'hidden' && input.value && input.value.trim() !== '') {
+          return true; // Found data
+        }
+      }
+    }
+    return false; // No data found
+  }
+  
+  // Handle number of canes update
+  const updateRowsBtn = document.getElementById("update_rows");
+  const numCanField = document.getElementById("num_can");
+  
+  if (updateRowsBtn && numCanField) {
+    updateRowsBtn.addEventListener("click", function() {
+      const numCanes = parseInt(numCanField.value);
+      if (numCanes && numCanes >= 1 && numCanes <= 50) {
+        // Check if there's any data entered in the form
+        const hasData = checkForExistingData();
+        
+        if (hasData) {
+          // Show confirmation dialog
+          const userConfirmed = confirm(
+            "You have entered data in the form. " +
+            "Updating the number of rows will clear your current data. " +
+            "Do you want to continue without saving?"
+          );
+          
+          if (!userConfirmed) {
+            return; // User cancelled, don't proceed
+          }
+        }
+        
+        // Submit form with num_can parameter to update the number of rows
+        const form = document.querySelector('form');
+        const currentAction = form.action;
+        
+        // Create a temporary form to submit just the num_can parameter
+        const tempForm = document.createElement('form');
+        tempForm.method = 'POST';
+        tempForm.action = window.location.href;
+        
+        // Add CSRF token
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrfmiddlewaretoken';
+        csrfInput.value = csrfToken;
+        tempForm.appendChild(csrfInput);
+        
+        // Add num_can parameter
+        const numCanInput = document.createElement('input');
+        numCanInput.type = 'hidden';
+        numCanInput.name = 'num_can';
+        numCanInput.value = numCanes;
+        tempForm.appendChild(numCanInput);
+        
+        // Submit the form
+        document.body.appendChild(tempForm);
+        tempForm.submit();
+      } else {
+        alert('Please enter a valid number of canes (1-50)');
+      }
+    });
+    
+    // Also allow Enter key to trigger update
+    numCanField.addEventListener("keypress", function(e) {
+      if (e.key === "Enter") {
+        e.preventDefault(); // Prevent form submission
+        updateRowsBtn.click();
+      }
+    });
+  }
+  
+  // ✅ Back to Top button functionality
+  const backToTopBtn = document.getElementById("back-to-top");
+  
+  // Show/hide button based on scroll position
+  window.addEventListener("scroll", function() {
+    if (window.scrollY > 300) {
+      backToTopBtn.classList.remove("opacity-0", "invisible");
+      backToTopBtn.classList.add("opacity-100", "visible");
+    } else {
+      backToTopBtn.classList.add("opacity-0", "invisible");
+      backToTopBtn.classList.remove("opacity-100", "visible");
+    }
+  });
+  
+  // Smooth scroll to top when clicked
+  backToTopBtn.addEventListener("click", function() {
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth"
+    });
+  });
+  
+  // ✅ Reed ID data loading functionality
+  const loadRangeBtn = document.getElementById("load_reed_range");
+  
+  // CSRF Cookie function for Reed ID loading
+  function getCookieForReed(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== "") {
+      const cookies = document.cookie.split(";");
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.startsWith(name + "=")) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+  
+  // Load reed range data
+  if (loadRangeBtn) {
+    loadRangeBtn.addEventListener("click", function() {
+      const reedIdFrom = document.getElementById("reed_id_from").value.trim();
+      const reedIdTo = document.getElementById("reed_id_to").value.trim();
+      
+      if (!reedIdFrom || !reedIdTo) {
+        alert("Please enter both From and To Reed IDs");
+        return;
+      }
+      
+      loadReedData({ reed_id_from: reedIdFrom, reed_id_to: reedIdTo });
+    });
+  }
+  
+  // Function to load reed data via AJAX
+  function loadReedData(requestData) {
+    const csrftoken = getCookieForReed("csrftoken");
+    
+    console.log("Making request to load reed data:", requestData);
+    
+    fetch("{% url 'reeds:get_reed_data' %}", {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": csrftoken,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(requestData),
+    })
+    .then(response => {
+      console.log("Response status:", response.status);
+      return response.json();
+    })
+    .then(data => {
+      console.log("Response data:", data);
+      if (data.success) {
+        if (data.reeds) {
+          // Multiple reed data
+          console.log("Loading multiple reed data");
+          populateMultipleRows(data.reeds);
+        }
+      } else {
+        console.error("Server error:", data.error);
+        alert("Error loading reed data: " + (data.error || "Unknown error"));
+      }
+    })
+    .catch(error => {
+      console.error("Network error:", error);
+      alert("Failed to load reed data. Please try again.");
+    });
+  }
+  
+  // Function to populate a single row with reed data
+  function populateRow(rowIndex, reedData) {
+    const rows = document.querySelectorAll("#batch-rows tr");
+    if (rowIndex >= rows.length) {
+      alert("Target row not found");
+      return;
+    }
+    
+    const row = rows[rowIndex];
+    
+    // Populate each field using Django formset naming convention
+    Object.keys(reedData).forEach(fieldName => {
+      // Skip non-form fields
+      if (['id', 'date', 'reedauthor'].includes(fieldName)) {
+        return;
+      }
+      
+      // Try to find input with formset naming pattern: form-N-fieldname
+      const input = row.querySelector(`[name$="-${fieldName}"]`);
+      if (input && reedData[fieldName] !== null) {
+        // Handle different input types
+        if (input.type === 'date' && typeof reedData[fieldName] === 'string') {
+          // Convert ISO date to YYYY-MM-DD format
+          input.value = reedData[fieldName].split('T')[0];
+        } else {
+          input.value = reedData[fieldName];
+        }
+        
+        // Trigger any input events (like density calculation)
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        console.log(`Set ${fieldName} = ${reedData[fieldName]}`);
+      } else {
+        // Debug: log if field not found
+        if (reedData[fieldName] !== null) {
+          console.log(`Field ${fieldName} not found in row ${rowIndex + 1}`);
+        }
+      }
+    });
+    
+    console.log(`Populated row ${rowIndex + 1} with reed data`);
+  }
+  
+  // Function to populate multiple rows with reed range data
+  function populateMultipleRows(reedsData) {
+    const rows = document.querySelectorAll("#batch-rows tr");
+    let successCount = 0;
+    let errorCount = 0;
+    
+    reedsData.forEach((reedInfo, index) => {
+      if (index >= rows.length) {
+        console.warn(`Not enough rows to populate reed ${reedInfo.reed_id}`);
+        return;
+      }
+      
+      if (reedInfo.error) {
+        console.warn(`Reed ${reedInfo.reed_id}: ${reedInfo.error}`);
+        errorCount++;
+        return;
+      }
+      
+      if (reedInfo.data) {
+        populateRow(index, reedInfo.data);
+        successCount++;
+      }
+    });
+    
+    // Show summary message
+    let message = `Loaded ${successCount} reed(s)`;
+    if (errorCount > 0) {
+      message += `, ${errorCount} not found`;
+    }
+    alert(message);
+  }
+  
+  // Debug: Add form submission logging
+  const submitBtn = document.getElementById("submit-batch-btn");
+  const form = document.querySelector('form');
+  
+  if (submitBtn && form) {
+    submitBtn.addEventListener("click", async function(e) {
+      console.log("Submit button clicked");
+      
+      // Check if there's any data in the form and count rows with Reed IDs
+      const reedIdInputs = form.querySelectorAll('input[name$="-reed_ID"]');
+      let rowsWithReedIds = 0;
+      let totalDataRows = 0;
+      
+      reedIdInputs.forEach((reedIdInput, index) => {
+        const rowHasReedId = reedIdInput.value && reedIdInput.value.trim() !== '';
+        
+        // Check if this row has any other data
+        const rowInputs = form.querySelectorAll(`input[name^="form-${index}-"], select[name^="form-${index}-"]`);
+        let rowHasData = false;
+        
+        rowInputs.forEach(input => {
+          if (input.value && input.value.trim() !== '' && !input.name.includes('DELETE')) {
+            rowHasData = true;
+          }
+        });
+        
+        if (rowHasData) {
+          totalDataRows++;
+          if (rowHasReedId) {
+            rowsWithReedIds++;
+          }
+        }
+      });
+      
+      console.log(`Total rows with data: ${totalDataRows}`);
+      console.log(`Rows with Reed IDs: ${rowsWithReedIds}`);
+      
+      if (totalDataRows === 0) {
+        e.preventDefault();
+        alert("Please enter some data before submitting the form.");
+        return false;
+      }
+      
+      if (rowsWithReedIds === 0) {
+        e.preventDefault();
+        alert("Please enter at least one Reed ID. Rows without Reed IDs will be ignored.");
+        return false;
+      }
+      
+      // Show info message if some rows will be ignored
+      if (totalDataRows > rowsWithReedIds) {
+        const ignoredRows = totalDataRows - rowsWithReedIds;
+        const message = `${ignoredRows} row(s) without Reed IDs will be ignored. Only ${rowsWithReedIds} row(s) will be saved. Continue?`;
+        if (!confirm(message)) {
+          e.preventDefault();
+          return false;
+        }
+      }
+      
+      // Check for existing reed IDs (reuse the reedIdInputs from above)
+      const reedIdsToCheck = [];
+      
+      reedIdInputs.forEach(input => {
+        if (input.value && input.value.trim() !== '') {
+          reedIdsToCheck.push(input.value.trim());
+        }
+      });
+      
+      if (reedIdsToCheck.length > 0) {
+        e.preventDefault(); // Prevent form submission
+        
+        try {
+          // Check if any reed IDs already exist
+          const response = await fetch('/reeds/get-reed-data/', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify({ reed_ids: reedIdsToCheck })
+          });
+          
+          const data = await response.json();
+          const existingIds = data.existing_reed_ids || [];
+          
+          if (existingIds.length > 0) {
+            const message = existingIds.length === 1 
+              ? `Reed ID "${existingIds[0]}" already exists and will be updated. Do you want to continue?`
+              : `Reed IDs [${existingIds.join(', ')}] already exist and will be updated. Do you want to continue?`;
+              
+            if (confirm(message)) {
+              // User confirmed, submit the form
+              form.submit();
+            }
+            // If user cancels, do nothing (form won't be submitted)
+          } else {
+            // No existing IDs found, submit normally
+            form.submit();
+          }
+        } catch (error) {
+          console.error('Error checking existing reed IDs:', error);
+          // If there's an error, submit normally
+          form.submit();
+        }
+      } else {
+        // No reed IDs entered, submit normally
+        form.submit();
+      }
+    });
+    
+    form.addEventListener("submit", function(e) {
+      console.log("Form is being submitted");
+      console.log("Form action:", form.action);
+      console.log("Form method:", form.method);
+    });
+  }
+  
+  // Auto-fill functionality for batch common fields
+  function setupBatchAutoFill() {
+    // Fields that should be auto-filled across all rows
+    const commonFields = ['instrument', 'cane_brand', 'gouging_machine', 'shaper', 'shaper_model'];
+    
+    // Flag to prevent infinite loops
+    let isAutoFilling = false;
+    
+    commonFields.forEach(fieldName => {
+      // Find all inputs with this field name across all rows
+      const fieldInputs = document.querySelectorAll(`select[name$="-${fieldName}"], input[name$="-${fieldName}"]`);
+      
+      fieldInputs.forEach(input => {
+        // Remove any existing event listeners to prevent duplicates
+        input.removeEventListener('change', input._autoFillHandler);
+        
+        // Create the handler function
+        input._autoFillHandler = function() {
+          // Prevent infinite loops
+          if (isAutoFilling) {
+            console.log(`Skipping auto-fill for ${fieldName} - already in progress`);
+            return;
+          }
+          
+          const selectedValue = this.value;
+          console.log(`Auto-fill triggered for ${fieldName}: ${selectedValue}`);
+          
+          // Only auto-fill if a value is selected and it's not empty
+          if (selectedValue && selectedValue.trim() !== '') {
+            // Get field label for display
+            let fieldLabel = fieldName.replace('_', ' ');
+            const fieldCell = this.closest('td');
+            if (fieldCell && fieldCell.getAttribute('data-field')) {
+              fieldLabel = fieldCell.getAttribute('data-field').replace('_', ' ');
+            }
+            
+            const confirmMessage = `Apply "${selectedValue}" to all rows for ${fieldLabel}?`;
+            
+            // Use setTimeout to ensure the change is processed first
+            setTimeout(() => {
+              if (confirm(confirmMessage)) {
+                console.log(`Applying ${selectedValue} to all ${fieldName} fields`);
+                
+                // Set flag to prevent infinite loops
+                isAutoFilling = true;
+                
+                // Apply to all other rows
+                let appliedCount = 0;
+                fieldInputs.forEach(otherInput => {
+                  if (otherInput !== this) {
+                    otherInput.value = selectedValue;
+                    appliedCount++;
+                    
+                    // For dependent fields, trigger change but don't trigger auto-fill
+                    if (otherInput.tagName === 'SELECT' && fieldName === 'shaper') {
+                      // Only trigger change for shaper to update shaper_model options
+                      otherInput.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+                  }
+                });
+                
+                console.log(`Applied to ${appliedCount} fields`);
+                
+                // Reset flag after a short delay
+                setTimeout(() => {
+                  isAutoFilling = false;
+                }, 100);
+                
+                // Show a brief success message
+                showAutoFillMessage(`${fieldLabel} applied to ${appliedCount} rows`);
+              }
+            }, 50); // Small delay to ensure DOM is updated
+          }
+        };
+        
+        // Add the event listener
+        input.addEventListener('change', input._autoFillHandler);
+      });
+    });
+  }
+  
+  // Show auto-fill success message
+  function showAutoFillMessage(message) {
+    // Create or update message element
+    let messageEl = document.getElementById('autofill-message');
+    if (!messageEl) {
+      messageEl = document.createElement('div');
+      messageEl.id = 'autofill-message';
+      messageEl.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 transition-all duration-300';
+      document.body.appendChild(messageEl);
+    }
+    
+    messageEl.textContent = message;
+    messageEl.classList.remove('opacity-0');
+    messageEl.classList.add('opacity-100');
+    
+    // Hide after 2 seconds
+    setTimeout(() => {
+      messageEl.classList.remove('opacity-100');
+      messageEl.classList.add('opacity-0');
+    }, 2000);
+  }
+  
+  // Cane Brand tooltip functionality for batch entry
+  function setupCaneBrandTooltips() {
+    // Header tooltip
+    const caneBrandHeaderContainer = document.getElementById("cane-brand-header-container");
+    const caneBrandHeaderTooltip = document.getElementById("cane-brand-header-tooltip");
+    let headerHoverTimeout;
+    
+    if (caneBrandHeaderContainer && caneBrandHeaderTooltip) {
+      caneBrandHeaderContainer.addEventListener("mouseenter", function() {
+        headerHoverTimeout = setTimeout(function() {
+          caneBrandHeaderTooltip.classList.remove("opacity-0", "invisible");
+          caneBrandHeaderTooltip.classList.add("opacity-100", "visible");
+        }, 6000); // 6 seconds
+      });
+      
+      caneBrandHeaderContainer.addEventListener("mouseleave", function() {
+        clearTimeout(headerHoverTimeout);
+        caneBrandHeaderTooltip.classList.add("opacity-0", "invisible");
+        caneBrandHeaderTooltip.classList.remove("opacity-100", "visible");
+      });
+    }
+    
+    // Cell tooltips
+    const caneBrandCellContainers = document.querySelectorAll(".cane-brand-cell-container");
+    
+    caneBrandCellContainers.forEach(function(container) {
+      const tooltip = container.querySelector(".cane-brand-cell-tooltip");
+      let cellHoverTimeout;
+      
+      if (tooltip) {
+        container.addEventListener("mouseenter", function() {
+          cellHoverTimeout = setTimeout(function() {
+            tooltip.classList.remove("opacity-0", "invisible");
+            tooltip.classList.add("opacity-100", "visible");
+          }, 6000); // 6 seconds
+        });
+        
+        container.addEventListener("mouseleave", function() {
+          clearTimeout(cellHoverTimeout);
+          tooltip.classList.add("opacity-0", "invisible");
+          tooltip.classList.remove("opacity-100", "visible");
+        });
+      }
+    });
+  }
+  
+  // Initialize tooltips on page load
+  setupCaneBrandTooltips();
+  setupBatchAutoFill();
+  
+  // Re-initialize tooltips and auto-fill when rows are updated
+  const originalAttachDensityCalculation = attachDensityCalculation;
+  attachDensityCalculation = function() {
+    originalAttachDensityCalculation();
+    setupCaneBrandTooltips();
+    setupBatchAutoFill();
+  };
+  
+});
+
+
+</script>
+
+{% endblock content %}

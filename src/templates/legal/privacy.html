@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Privacy Policy - ReedManage{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold text-gray-900 mb-6">Privacy Policy</h1>
+
+    <p class="text-sm text-gray-600 mb-8">Last updated: January 22, 2026</p>
+
+    <div class="prose prose-indigo max-w-none">
+        <h2 class="text-2xl font-semibold text-gray-900 mt-8 mb-4">1. Introduction</h2>
+        <p class="text-gray-700 mb-4">
+            Welcome to ReedManage. We respect your privacy and are committed to protecting your personal data.
+            This privacy policy explains how we collect, use, and safeguard your information when you use our reed tracking application.
+        </p>
+
+        <h2 class="text-2xl font-semibold text-gray-900 mt-8 mb-4">2. Information We Collect</h2>
+        <p class="text-gray-700 mb-4">We collect the following types of information:</p>
+        <ul class="list-disc pl-6 mb-4 text-gray-700">
+            <li><strong>Account Information:</strong> Username, email address, first name, last name</li>
+            <li><strong>Reed Data:</strong> Information about your reeds including measurements, quality ratings, and notes</li>
+            <li><strong>Usage Data:</strong> How you interact with our application, including pages visited and features used</li>
+            <li><strong>Weather Data:</strong> Location-based weather information for reed tracking purposes</li>
+        </ul>
+
+        <h2 class="text-2xl font-semibold text-gray-900 mt-8 mb-4">3. How We Use Your Information</h2>
+        <p class="text-gray-700 mb-4">We use your information to:</p>
+        <ul class="list-disc pl-6 mb-4 text-gray-700">
+            <li>Provide and maintain our reed tracking service</li>
+            <li>Send you verification emails and important account notifications</li>
+            <li>Analyze and improve our application's performance</li>
+            <li>Provide customer support and respond to your inquiries</li>
+            <li>Generate analytics and statistics about your reed data</li>
+        </ul>
+
+        <h2 class="text-2xl font-semibold text-gray-900 mt-8 mb-4">4. Data Security</h2>
+        <p class="text-gray-700 mb-4">
+            We implement appropriate security measures to protect your personal information, including:
+        </p>
+        <ul class="list-disc pl-6 mb-4 text-gray-700">
+            <li>Encrypted password storage</li>
+            <li>Secure HTTPS connections</li>
+            <li>Rate limiting to prevent brute force attacks</li>
+            <li>Regular security audits and updates</li>
+        </ul>
+
+        <h2 class="text-2xl font-semibold text-gray-900 mt-8 mb-4">5. Data Sharing</h2>
+        <p class="text-gray-700 mb-4">
+            We do not sell, trade, or rent your personal information to third parties. We may share your data only in the following circumstances:
+        </p>
+        <ul class="list-disc pl-6 mb-4 text-gray-700">
+            <li>With your explicit consent</li>
+            <li>To comply with legal obligations or court orders</li>
+            <li>To protect our rights, property, or safety</li>
+        </ul>
+
+        <h2 class="text-2xl font-semibold text-gray-900 mt-8 mb-4">6. Your Rights</h2>
+        <p class="text-gray-700 mb-4">You have the right to:</p>
+        <ul class="list-disc pl-6 mb-4 text-gray-700">
+            <li>Access your personal data</li>
+            <li>Correct inaccurate data</li>
+            <li>Request deletion of your account and data</li>
+            <li>Export your data in CSV, Excel, or JSON format</li>
+            <li>Opt-out of non-essential communications</li>
+        </ul>
+
+        <h2 class="text-2xl font-semibold text-gray-900 mt-8 mb-4">7. Cookies</h2>
+        <p class="text-gray-700 mb-4">
+            We use cookies to maintain your session and improve your experience. Essential cookies are required for the application to function.
+            You can manage cookie preferences in your browser settings.
+        </p>
+
+        <h2 class="text-2xl font-semibold text-gray-900 mt-8 mb-4">8. Data Retention</h2>
+        <p class="text-gray-700 mb-4">
+            We retain your data for as long as your account is active. If you delete your account,
+            we will permanently delete all your personal data within 30 days, except where we are required to retain it by law.
+        </p>
+
+        <h2 class="text-2xl font-semibold text-gray-900 mt-8 mb-4">9. Children's Privacy</h2>
+        <p class="text-gray-700 mb-4">
+            Our service is not directed to individuals under the age of 13. We do not knowingly collect personal information from children under 13.
+        </p>
+
+        <h2 class="text-2xl font-semibold text-gray-900 mt-8 mb-4">10. Changes to This Policy</h2>
+        <p class="text-gray-700 mb-4">
+            We may update this privacy policy from time to time. We will notify you of significant changes by email or through a prominent notice on our application.
+        </p>
+
+        <h2 class="text-2xl font-semibold text-gray-900 mt-8 mb-4">11. Contact Us</h2>
+        <p class="text-gray-700 mb-4">
+            If you have questions about this privacy policy or your data, please contact us through our
+            <a href="{% url 'contact:contact' %}" class="text-indigo-600 hover:text-indigo-800">contact form</a>.
+        </p>
+    </div>
+
+    <div class="mt-8 pt-8 border-t border-gray-200">
+        <a href="{% url 'home' %}" class="text-indigo-600 hover:text-indigo-800">← Back to Home</a>
+    </div>
+</div>
+{% endblock %}
