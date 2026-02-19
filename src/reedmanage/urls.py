@@ -22,6 +22,7 @@ from django.contrib.auth import views as auth_views
 from .views import (
     home_view, login_view, signup, verify_email_view,
     privacy_policy_view, terms_of_service_view,
+    faq_view, quick_start_guide_view,
     test_404_view, test_500_view
 )
 from .health_check import health_check, simple_health_check, detailed_health_check
@@ -34,9 +35,19 @@ urlpatterns = [
     path('logout/', auth_views.LogoutView.as_view(next_page='login'), name='logout'),
     path('verify-email/<uidb64>/<token>/', verify_email_view, name='verify_email'),
 
+    # Password reset URLs
+    path('password-reset/', auth_views.PasswordResetView.as_view(template_name='password_reset/password_reset.html'), name='password_reset'),
+    path('password-reset/done/', auth_views.PasswordResetDoneView.as_view(template_name='password_reset/password_reset_done.html'), name='password_reset_done'),
+    path('password-reset-confirm/<uidb64>/<token>/', auth_views.PasswordResetConfirmView.as_view(template_name='password_reset/password_reset_confirm.html'), name='password_reset_confirm'),
+    path('password-reset-complete/', auth_views.PasswordResetCompleteView.as_view(template_name='password_reset/password_reset_complete.html'), name='password_reset_complete'),
+
     # Legal pages
     path('legal/privacy/', privacy_policy_view, name='privacy_policy'),
     path('legal/terms/', terms_of_service_view, name='terms_of_service'),
+
+    # Help pages
+    path('help/faq/', faq_view, name='faq'),
+    path('help/guide/', quick_start_guide_view, name='quick_start_guide'),
 
     #path('evaluate/', include('reedsdata.urls', namespace='reeds')),
     path('reeds/', include('reedsdata.urls', namespace='reeds')),

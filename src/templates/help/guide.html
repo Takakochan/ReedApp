@@ -1,0 +1,382 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Quick Start Guide - ReedManage{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold text-gray-900 mb-2">Quick Start Guide</h1>
+    <p class="text-gray-600 mb-8">Complete technical guide to tracking and optimizing your reed-making process</p>
+
+    <!-- Introduction -->
+    <div class="bg-indigo-50 rounded-lg p-6 mb-8">
+        <h2 class="text-xl font-semibold text-gray-900 mb-2">Welcome to ReedManage!</h2>
+        <p class="text-gray-700">
+            This comprehensive guide provides technical information about reed parameters, measurement techniques,
+            and data analysis to help you systematically improve your reed-making craft. Whether you're a student
+            learning the fundamentals or a professional refining your technique, this guide will help you understand
+            the science behind great reeds.
+        </p>
+    </div>
+
+    <!-- Step 1: Account Setup -->
+    <div class="mb-10">
+        <div class="flex items-center mb-4">
+            <div class="flex-shrink-0 w-10 h-10 bg-indigo-600 text-white rounded-full flex items-center justify-center font-bold text-lg">
+                1
+            </div>
+            <h2 class="text-2xl font-semibold text-gray-900 ml-4">Account Setup</h2>
+        </div>
+        <div class="ml-14">
+            <p class="text-gray-700 mb-3">
+                You've already completed this step! Your account is set up and ready to go.
+            </p>
+            <div class="bg-gray-50 rounded-lg p-4">
+                <p class="text-sm text-gray-600">
+                    <strong>Tip:</strong> Visit your <a href="{% url 'account:account' %}" class="text-indigo-600 hover:text-indigo-800 underline">Account page</a>
+                    to access advanced features like data export and ML-powered analytics.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 2: Add Your First Reed -->
+    <div class="mb-10">
+        <div class="flex items-center mb-4">
+            <div class="flex-shrink-0 w-10 h-10 bg-indigo-600 text-white rounded-full flex items-center justify-center font-bold text-lg">
+                2
+            </div>
+            <h2 class="text-2xl font-semibold text-gray-900 ml-4">Add Your First Reed</h2>
+        </div>
+        <div class="ml-14">
+            <p class="text-gray-700 mb-3">
+                Start by logging your first reed. Click <strong>"Add Reed"</strong> in the sidebar and enter the available data:
+            </p>
+            <ol class="list-decimal pl-6 text-gray-700 space-y-2 mb-4">
+                <li>Basic information (reed ID, date, instrument)</li>
+                <li>Cane specifications (brand, harvest year, diameter)</li>
+                <li>Physical measurements (thickness, hardness, flexibility, density)</li>
+                <li>Equipment used (gouging machine, shaper model)</li>
+                <li>Quality ratings and performance notes</li>
+            </ol>
+            <div class="bg-indigo-50 rounded-lg p-4">
+                <p class="text-sm text-gray-700">
+                    <strong>Pro tip:</strong> Use the help icons (?) next to field labels for quick parameter explanations.
+                    Weather data (temperature and humidity) is automatically fetched to correlate environmental conditions with reed performance.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 3: Understanding Parameters -->
+    <div class="mb-10">
+        <div class="flex items-center mb-4">
+            <div class="flex-shrink-0 w-10 h-10 bg-indigo-600 text-white rounded-full flex items-center justify-center font-bold text-lg">
+                3
+            </div>
+            <h2 class="text-2xl font-semibold text-gray-900 ml-4">Understanding Reed Parameters</h2>
+        </div>
+        <div class="ml-14">
+            <p class="text-gray-700 mb-4">
+                Each parameter affects reed performance in specific ways. Understanding these relationships helps you
+                make targeted adjustments to achieve your desired tone and response.
+            </p>
+        </div>
+    </div>
+
+    <!-- Technical Parameter Details -->
+    <div class="mb-10 ml-14">
+        <h3 class="text-xl font-semibold text-gray-900 mb-4">Physical Measurements</h3>
+
+        <div class="space-y-4">
+            <div class="bg-white border-l-4 border-indigo-600 rounded-lg p-5 shadow-sm">
+                <h4 class="font-bold text-gray-900 mb-2 text-lg">Diameter (Cane Width)</h4>
+                <p class="text-gray-700 mb-2">
+                    The outer diameter of the cane tube, typically measured before splitting. Diameter directly affects resistance and tone color.
+                </p>
+                <ul class="list-disc pl-6 text-gray-700 text-sm space-y-1">
+                    <li><strong>Oboe:</strong> 10-12mm (most common: 10.5-11mm)</li>
+                    <li><strong>Bassoon:</strong> 24-26mm (most common: 25mm)</li>
+                    <li><strong>English Horn:</strong> 13-15mm</li>
+                </ul>
+                <p class="text-gray-700 text-sm mt-2">
+                    <strong>Impact:</strong> Larger diameter = more resistance, darker tone. Smaller diameter = less resistance, brighter tone.
+                    Diameter also affects the vibrating surface area and harmonic spectrum.
+                </p>
+            </div>
+
+            <div class="bg-white border-l-4 border-indigo-600 rounded-lg p-5 shadow-sm">
+                <h4 class="font-bold text-gray-900 mb-2 text-lg">Thickness (Gouge Thickness)</h4>
+                <p class="text-gray-700 mb-2">
+                    The thickness at the center of the cane after gouging, measured with a dial indicator or micrometer.
+                </p>
+                <ul class="list-disc pl-6 text-gray-700 text-sm space-y-1">
+                    <li><strong>Oboe:</strong> 0.55-0.60mm (tolerance: ±0.01mm)</li>
+                    <li><strong>Bassoon:</strong> 0.90-1.10mm</li>
+                    <li><strong>English Horn:</strong> 0.65-0.70mm</li>
+                </ul>
+                <p class="text-gray-700 text-sm mt-2">
+                    <strong>Impact:</strong> Thicker gouge = more resistant, darker sound, better low register.
+                    Thinner gouge = easier to play, brighter, better high register response.
+                    Final scraping compensates for initial gouge thickness.
+                </p>
+            </div>
+
+            <div class="bg-white border-l-4 border-indigo-600 rounded-lg p-5 shadow-sm">
+                <h4 class="font-bold text-gray-900 mb-2 text-lg">Hardness</h4>
+                <p class="text-gray-700 mb-2">
+                    The rigidity of the cane fibers, assessed by touch or flexure testing. Hardness is influenced by cane maturity,
+                    growing conditions, and storage.
+                </p>
+                <ul class="list-disc pl-6 text-gray-700 text-sm space-y-1">
+                    <li><strong>Soft:</strong> Easy blowing, quick response, may lack stability and projection</li>
+                    <li><strong>Medium:</strong> Balanced response and resistance, suitable for most players</li>
+                    <li><strong>Hard:</strong> High resistance, brilliant tone, excellent projection, requires strong embouchure</li>
+                </ul>
+                <p class="text-gray-700 text-sm mt-2">
+                    <strong>Selection tip:</strong> Match hardness to your embouchure strength and desired sound. Beginners often
+                    benefit from medium-soft cane; professionals may prefer medium-hard for projection.
+                </p>
+            </div>
+
+            <div class="bg-white border-l-4 border-indigo-600 rounded-lg p-5 shadow-sm">
+                <h4 class="font-bold text-gray-900 mb-2 text-lg">Flexibility</h4>
+                <p class="text-gray-700 mb-2">
+                    How much the reed blades bend under light pressure. Flexibility affects articulation speed and dynamic range.
+                </p>
+                <ul class="list-disc pl-6 text-gray-700 text-sm space-y-1">
+                    <li><strong>Flexible:</strong> Quick response, wide dynamics, may be unstable in pitch</li>
+                    <li><strong>Medium:</strong> Balanced articulation and stability</li>
+                    <li><strong>Stiff:</strong> Slower response, stable pitch, narrower dynamic range</li>
+                </ul>
+                <p class="text-gray-700 text-sm mt-2">
+                    <strong>Technical note:</strong> Flexibility is determined by fiber orientation, moisture content, and scrape profile.
+                    The tip area flexibility is most critical for response.
+                </p>
+            </div>
+
+            <div class="bg-white border-l-4 border-indigo-600 rounded-lg p-5 shadow-sm">
+                <h4 class="font-bold text-gray-900 mb-2 text-lg">Density</h4>
+                <p class="text-gray-700 mb-2">
+                    The mass-to-volume ratio of the cane fibers, measured as g/cm³. ReedManage calculates this automatically
+                    from dry mass and wet mass using the formula: Density = M₁ / (M₁ + M₂)
+                </p>
+                <ul class="list-disc pl-6 text-gray-700 text-sm space-y-1">
+                    <li><strong>High density (0.75-0.85):</strong> Durable, stable, projects well, slower break-in</li>
+                    <li><strong>Medium density (0.65-0.75):</strong> Balanced longevity and responsiveness</li>
+                    <li><strong>Low density (0.55-0.65):</strong> Responsive, bright, less durable</li>
+                </ul>
+                <p class="text-gray-700 text-sm mt-2">
+                    <strong>Measurement protocol:</strong> Measure M₁ (dry mass) after 24 hours at 20°C and 50% humidity.
+                    Measure M₂ (wet mass) after 2 minutes soaking. Density correlates with lignin content and cell wall thickness.
+                </p>
+            </div>
+        </div>
+
+        <h3 class="text-xl font-semibold text-gray-900 mb-4 mt-8">Equipment Parameters</h3>
+
+        <div class="space-y-4">
+            <div class="bg-white border-l-4 border-purple-600 rounded-lg p-5 shadow-sm">
+                <h4 class="font-bold text-gray-900 mb-2 text-lg">Shaper</h4>
+                <p class="text-gray-700 mb-2">
+                    The template that defines the reed's lateral profile and overall shape. Different shapers produce distinct tonal characteristics.
+                </p>
+                <p class="text-gray-700 text-sm">
+                    <strong>Popular oboe shapers:</strong> Chiarugi 2 (narrow, focused), RDG 1 (medium width, balanced),
+                    Mack+ (wide, darker tone). Shaper tip width affects the sweet spot and harmonic balance.
+                </p>
+                <p class="text-gray-700 text-sm mt-2">
+                    <strong>Popular bassoon shapers:</strong> Rieger 1A, Herzberg, Fox 2. Shaper profile affects throat resistance
+                    and tonal complexity.
+                </p>
+            </div>
+
+            <div class="bg-white border-l-4 border-purple-600 rounded-lg p-5 shadow-sm">
+                <h4 class="font-bold text-gray-900 mb-2 text-lg">Gouging Machine</h4>
+                <p class="text-gray-700 mb-2">
+                    The device that removes bark and shapes the cane's thickness profile. Bed diameter and blade curve affect the final gouge.
+                </p>
+                <p class="text-gray-700 text-sm">
+                    <strong>Key settings:</strong> Bed diameter (typically 9.5-10.5mm for oboe), blade radius, and side thickness
+                    determine the thickness curve. Track which machine you use to identify consistency issues.
+                </p>
+            </div>
+        </div>
+
+        <h3 class="text-xl font-semibold text-gray-900 mb-4 mt-8">Environmental Factors</h3>
+
+        <div class="bg-white border-l-4 border-green-600 rounded-lg p-5 shadow-sm">
+            <h4 class="font-bold text-gray-900 mb-2 text-lg">Weather Impact on Reed Performance</h4>
+            <p class="text-gray-700 mb-3">
+                Temperature and humidity significantly affect reed behavior through hygroscopic changes in cane fibers.
+                ReedManage automatically logs weather data to help you understand these correlations.
+            </p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-700">
+                <div>
+                    <p class="font-semibold mb-2">Temperature Effects:</p>
+                    <ul class="list-disc pl-6 space-y-1">
+                        <li><strong>Cold (&lt;15°C):</strong> Reeds play sharp, stiffer response</li>
+                        <li><strong>Moderate (15-25°C):</strong> Optimal performance range</li>
+                        <li><strong>Warm (&gt;25°C):</strong> Reeds play flat, softer feel</li>
+                    </ul>
+                </div>
+                <div>
+                    <p class="font-semibold mb-2">Humidity Effects:</p>
+                    <ul class="list-disc pl-6 space-y-1">
+                        <li><strong>Dry (&lt;40%):</strong> Reeds harden, crack risk increases</li>
+                        <li><strong>Moderate (40-60%):</strong> Stable performance</li>
+                        <li><strong>Humid (&gt;60%):</strong> Reeds soften, water log faster</li>
+                    </ul>
+                </div>
+            </div>
+            <p class="text-gray-700 text-sm mt-3">
+                <strong>Data analysis tip:</strong> After logging 20+ reeds, review your statistics to identify which
+                cane hardness works best in your typical climate conditions.
+            </p>
+        </div>
+
+        <h3 class="text-xl font-semibold text-gray-900 mb-4 mt-8">Quality Assessment</h3>
+
+        <div class="bg-white border-l-4 border-yellow-600 rounded-lg p-5 shadow-sm">
+            <h4 class="font-bold text-gray-900 mb-2 text-lg">Rating Your Reeds</h4>
+            <p class="text-gray-700 mb-3">
+                Consistent quality ratings enable pattern recognition in your analytics. Rate reeds on a 1-5 scale based on these criteria:
+            </p>
+            <ul class="list-disc pl-6 text-gray-700 text-sm space-y-2">
+                <li><strong>5 Stars:</strong> Professional performance quality - stable pitch, even response across registers,
+                    beautiful tone, excellent endurance (concert ready)</li>
+                <li><strong>4 Stars:</strong> Very good - minor adjustments needed, suitable for most performances</li>
+                <li><strong>3 Stars:</strong> Good for practice - functional but has limitations in tone or response</li>
+                <li><strong>2 Stars:</strong> Usable for warm-up - significant issues but can produce sound</li>
+                <li><strong>1 Star:</strong> Failed reed - unusable, learning experience only</li>
+            </ul>
+            <p class="text-gray-700 text-sm mt-3">
+                <strong>Track multiple impressions:</strong> Rate reeds after initial play-in (1st impression), after break-in
+                (2nd impression), and after extended use (3rd impression) to track longevity.
+            </p>
+        </div>
+    </div>
+
+    <!-- Step 4: Data Analysis -->
+    <div class="mb-10">
+        <div class="flex items-center mb-4">
+            <div class="flex-shrink-0 w-10 h-10 bg-indigo-600 text-white rounded-full flex items-center justify-center font-bold text-lg">
+                4
+            </div>
+            <h2 class="text-2xl font-semibold text-gray-900 ml-4">Analyzing Your Data</h2>
+        </div>
+        <div class="ml-14">
+            <p class="text-gray-700 mb-3">
+                As you build your reed database, ReedManage provides powerful analytics to identify patterns and optimize your process:
+            </p>
+            <ul class="list-disc pl-6 text-gray-700 space-y-2 mb-4">
+                <li><strong>Data Overview:</strong> Visualize distributions of diameter, hardness, quality ratings, and correlations between parameters</li>
+                <li><strong>Statistics Page:</strong> ML-powered insights identify which cane brands, shapers, and parameter combinations produce your best reeds</li>
+                <li><strong>Quality Trends:</strong> Track improvement over time as your technique develops</li>
+                <li><strong>Correlation Analysis:</strong> Discover which parameters most strongly predict reed success for your playing style</li>
+            </ul>
+            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <p class="text-sm text-gray-700">
+                    <strong>Statistical significance:</strong> Meaningful patterns typically emerge after logging 15-20 reeds.
+                    For robust ML predictions, aim for 50+ reed entries with varied parameters.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Best Practices -->
+    <div class="mb-10">
+        <div class="flex items-center mb-4">
+            <div class="flex-shrink-0 w-10 h-10 bg-indigo-600 text-white rounded-full flex items-center justify-center font-bold text-lg">
+                5
+            </div>
+            <h2 class="text-2xl font-semibold text-gray-900 ml-4">Best Practices for Data Collection</h2>
+        </div>
+        <div class="ml-14">
+            <div class="space-y-3">
+                <div class="flex">
+                    <div class="flex-shrink-0 text-indigo-600 mr-3 font-bold">1.</div>
+                    <p class="text-gray-700">
+                        <strong>Consistency is key:</strong> Use the same measurement techniques and rating criteria for all reeds.
+                        Calibrate your measurements with a micrometer and always measure at the same location.
+                    </p>
+                </div>
+                <div class="flex">
+                    <div class="flex-shrink-0 text-indigo-600 mr-3 font-bold">2.</div>
+                    <p class="text-gray-700">
+                        <strong>Document everything:</strong> Include detailed notes about scraping technique, adjustment strategies,
+                        and performance contexts. Future you will thank present you.
+                    </p>
+                </div>
+                <div class="flex">
+                    <div class="flex-shrink-0 text-indigo-600 mr-3 font-bold">3.</div>
+                    <p class="text-gray-700">
+                        <strong>Track failures too:</strong> Failed reeds provide valuable data. Understanding what doesn't work
+                        is as important as knowing what does.
+                    </p>
+                </div>
+                <div class="flex">
+                    <div class="flex-shrink-0 text-indigo-600 mr-3 font-bold">4.</div>
+                    <p class="text-gray-700">
+                        <strong>Use batch entry efficiently:</strong> When making multiple reeds from the same cane batch,
+                        use batch entry to quickly log shared parameters (brand, harvest year, equipment).
+                    </p>
+                </div>
+                <div class="flex">
+                    <div class="flex-shrink-0 text-indigo-600 mr-3 font-bold">5.</div>
+                    <p class="text-gray-700">
+                        <strong>Export regularly:</strong> Download your data monthly as backup. Use Excel export for
+                        custom analysis or CSV for compatibility with statistical software (R, Python).
+                    </p>
+                </div>
+                <div class="flex">
+                    <div class="flex-shrink-0 text-indigo-600 mr-3 font-bold">6.</div>
+                    <p class="text-gray-700">
+                        <strong>Review statistics quarterly:</strong> Set a reminder to review your analytics every 3 months
+                        to adjust your reed-making approach based on objective data.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Advanced Tips -->
+    <div class="mb-10 ml-14">
+        <div class="bg-gradient-to-r from-purple-50 to-indigo-50 border border-indigo-200 rounded-lg p-6">
+            <h3 class="text-xl font-semibold text-gray-900 mb-3">Advanced Tip: Scientific Approach</h3>
+            <p class="text-gray-700 mb-3">
+                Treat your reed-making like a controlled experiment. When testing a new variable (different shaper, cane brand, or thickness):
+            </p>
+            <ol class="list-decimal pl-6 text-gray-700 space-y-2 text-sm">
+                <li>Keep all other variables constant</li>
+                <li>Make at least 5-6 reeds with the new parameter to account for natural variation</li>
+                <li>Compare average quality ratings to your baseline</li>
+                <li>Use ReedManage's correlation analysis to quantify the impact</li>
+            </ol>
+            <p class="text-gray-700 text-sm mt-3">
+                This systematic approach accelerates skill development and leads to consistent, reproducible results.
+            </p>
+        </div>
+    </div>
+
+    <!-- Next Steps -->
+    <div class="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg p-6 text-white">
+        <h2 class="text-2xl font-semibold mb-3">Ready to Start Your Reed Journey!</h2>
+        <p class="mb-4">
+            You now have the technical knowledge to effectively track and optimize your reed-making process.
+            Start logging your reeds and let the data guide your improvement.
+        </p>
+        <div class="flex flex-wrap gap-3">
+            <a href="{% url 'reeds:add' %}" class="bg-white text-indigo-600 px-6 py-2 rounded-lg font-semibold hover:bg-gray-100 transition">
+                Add Your First Reed
+            </a>
+            <a href="{% url 'faq' %}" class="bg-indigo-700 text-white px-6 py-2 rounded-lg font-semibold hover:bg-indigo-800 transition">
+                Read the FAQ
+            </a>
+        </div>
+        <p class="text-sm mt-4 text-indigo-100">
+            Questions about technical details? <a href="{% url 'contact:contact' %}" class="underline hover:text-white">Contact us</a> - we're here to help!
+        </p>
+    </div>
+</div>
+{% endblock %}

@@ -53,7 +53,58 @@
                     </div>
                   {% elif field.name != 'density_auto_display' %}
                     <div class="space-y-1 p-1 min-w-0">
-                      <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-indigo-900 truncate">{{ field.label }}</label>
+                      <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-indigo-900 truncate">
+                        {{ field.label }}
+                        {% if field.name == 'diameter' %}
+                          <span class="help-icon inline-block ml-1 cursor-help" data-tooltip="The width of the cane, typically measured in millimeters. This affects the reed's resistance and tone quality. Typical range: 10-12mm for oboe, 25-30mm for bassoon.">
+                            <svg class="w-3.5 h-3.5 inline text-indigo-400 hover:text-indigo-600" fill="currentColor" viewBox="0 0 20 20">
+                              <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/>
+                            </svg>
+                          </span>
+                        {% elif field.name == 'hardness' %}
+                          <span class="help-icon inline-block ml-1 cursor-help" data-tooltip="How rigid the cane is (soft/medium/hard). Harder canes typically produce brighter tones but require more air pressure. Softer canes are easier to play but may lack projection.">
+                            <svg class="w-3.5 h-3.5 inline text-indigo-400 hover:text-indigo-600" fill="currentColor" viewBox="0 0 20 20">
+                              <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/>
+                            </svg>
+                          </span>
+                        {% elif field.name == 'flexibility' %}
+                          <span class="help-icon inline-block ml-1 cursor-help" data-tooltip="How much the blades bend (flexible/medium/stiff). This affects response time and dynamic range. More flexible reeds respond quickly but may be less stable in pitch.">
+                            <svg class="w-3.5 h-3.5 inline text-indigo-400 hover:text-indigo-600" fill="currentColor" viewBox="0 0 20 20">
+                              <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/>
+                            </svg>
+                          </span>
+                        {% elif field.name == 'density' or field.name == 'density_auto' %}
+                          <span class="help-icon inline-block ml-1 cursor-help" data-tooltip="The compactness of cane fibers, measured in g/cm³. Denser cane tends to be more durable and project better. Calculated from dry mass / (dry mass + wet mass).">
+                            <svg class="w-3.5 h-3.5 inline text-indigo-400 hover:text-indigo-600" fill="currentColor" viewBox="0 0 20 20">
+                              <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/>
+                            </svg>
+                          </span>
+                        {% elif field.name == 'thicness' %}
+                          <span class="help-icon inline-block ml-1 cursor-help" data-tooltip="The thickness of the cane after gouging, usually measured at the center. Typical range: 0.50-0.60mm for oboe, 1.0-1.2mm for bassoon. Affects resistance and tone.">
+                            <svg class="w-3.5 h-3.5 inline text-indigo-400 hover:text-indigo-600" fill="currentColor" viewBox="0 0 20 20">
+                              <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/>
+                            </svg>
+                          </span>
+                        {% elif 'global_quality' in field.name %}
+                          <span class="help-icon inline-block ml-1 cursor-help" data-tooltip="Your subjective rating of the reed (1-5 stars). Track this over time to identify patterns in successful reeds. Consider tone, response, pitch stability, and endurance.">
+                            <svg class="w-3.5 h-3.5 inline text-indigo-400 hover:text-indigo-600" fill="currentColor" viewBox="0 0 20 20">
+                              <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/>
+                            </svg>
+                          </span>
+                        {% elif field.name == 'shaper' or field.name == 'shaper_model' %}
+                          <span class="help-icon inline-block ml-1 cursor-help" data-tooltip="The shaper defines the reed's overall shape and width profile. Different shapers produce different tone colors and response characteristics. Popular brands include Reeds 'n Stuff, Chiarugi, and Rigotti.">
+                            <svg class="w-3.5 h-3.5 inline text-indigo-400 hover:text-indigo-600" fill="currentColor" viewBox="0 0 20 20">
+                              <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/>
+                            </svg>
+                          </span>
+                        {% elif field.name == 'gouging_machine' %}
+                          <span class="help-icon inline-block ml-1 cursor-help" data-tooltip="The machine used to thin the cane to the desired thickness. Different machines may produce slightly different curves and thicknesses, affecting the reed's playing characteristics.">
+                            <svg class="w-3.5 h-3.5 inline text-indigo-400 hover:text-indigo-600" fill="currentColor" viewBox="0 0 20 20">
+                              <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/>
+                            </svg>
+                          </span>
+                        {% endif %}
+                      </label>
                       {{ field|add_class:"w-full max-w-full px-2 py-1.5 text-sm border border-gray-200 rounded focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500" }}
                     </div>
                   {% endif %}
@@ -101,7 +152,7 @@
   const caneBrandContainer = document.getElementById("cane-brand-container");
   const caneBrandTooltip = document.getElementById("cane-brand-tooltip");
   let hoverTimeout;
-  
+
   if (caneBrandContainer && caneBrandTooltip) {
     caneBrandContainer.addEventListener("mouseenter", function() {
       // Start 6-second timer
@@ -110,7 +161,7 @@
         caneBrandTooltip.classList.add("opacity-100", "visible");
       }, 6000); // 6 seconds
     });
-    
+
     caneBrandContainer.addEventListener("mouseleave", function() {
       // Clear timer and hide tooltip
       clearTimeout(hoverTimeout);
@@ -118,7 +169,79 @@
       caneBrandTooltip.classList.remove("opacity-100", "visible");
     });
   }
-  
+
+  // Generic tooltip functionality for help icons
+  document.addEventListener('DOMContentLoaded', function() {
+    const helpIcons = document.querySelectorAll('.help-icon');
+    let activeTooltip = null;
+
+    helpIcons.forEach(icon => {
+      const tooltipText = icon.getAttribute('data-tooltip');
+      if (!tooltipText) return;
+
+      // Create tooltip element
+      const tooltip = document.createElement('div');
+      tooltip.className = 'absolute z-[9999] bg-indigo-900 text-white text-xs rounded-lg p-3 shadow-xl opacity-0 invisible transition-all duration-200 pointer-events-none w-64 -left-2 top-full mt-2';
+      tooltip.innerHTML = tooltipText;
+
+      // Position tooltip relative to icon
+      icon.style.position = 'relative';
+      icon.appendChild(tooltip);
+
+      // Show tooltip on hover (desktop)
+      icon.addEventListener('mouseenter', function() {
+        if (activeTooltip && activeTooltip !== tooltip) {
+          activeTooltip.classList.add('opacity-0', 'invisible');
+          activeTooltip.classList.remove('opacity-100', 'visible');
+        }
+        tooltip.classList.remove('opacity-0', 'invisible');
+        tooltip.classList.add('opacity-100', 'visible');
+        activeTooltip = tooltip;
+      });
+
+      icon.addEventListener('mouseleave', function() {
+        setTimeout(() => {
+          tooltip.classList.add('opacity-0', 'invisible');
+          tooltip.classList.remove('opacity-100', 'visible');
+          if (activeTooltip === tooltip) {
+            activeTooltip = null;
+          }
+        }, 100);
+      });
+
+      // Toggle tooltip on click (mobile)
+      icon.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (activeTooltip && activeTooltip !== tooltip) {
+          activeTooltip.classList.add('opacity-0', 'invisible');
+          activeTooltip.classList.remove('opacity-100', 'visible');
+        }
+
+        const isVisible = tooltip.classList.contains('visible');
+        if (isVisible) {
+          tooltip.classList.add('opacity-0', 'invisible');
+          tooltip.classList.remove('opacity-100', 'visible');
+          activeTooltip = null;
+        } else {
+          tooltip.classList.remove('opacity-0', 'invisible');
+          tooltip.classList.add('opacity-100', 'visible');
+          activeTooltip = tooltip;
+        }
+      });
+    });
+
+    // Close tooltip when clicking outside
+    document.addEventListener('click', function(e) {
+      if (activeTooltip && !e.target.closest('.help-icon')) {
+        activeTooltip.classList.add('opacity-0', 'invisible');
+        activeTooltip.classList.remove('opacity-100', 'visible');
+        activeTooltip = null;
+      }
+    });
+  });
+
 </script>
 
 {% endblock content %}

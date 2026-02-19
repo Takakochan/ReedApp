@@ -1,0 +1,267 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}FAQ - ReedManage{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold text-gray-900 mb-2">Frequently Asked Questions</h1>
+    <p class="text-gray-600 mb-8">Quick answers to common questions about ReedManage</p>
+
+    <div class="space-y-6">
+        <!-- General Questions -->
+        <div class="border-b border-gray-200 pb-6">
+            <h2 class="text-2xl font-semibold text-indigo-600 mb-4">General</h2>
+
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">What is ReedManage?</h3>
+                <p class="text-gray-700">
+                    ReedManage is a reed tracking application designed for double reed musicians (oboe, bassoon,
+                    and related instruments). It helps you log, track, and analyze your reed-making progress.
+                </p>
+            </div>
+
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">What instruments are supported?</h3>
+                <p class="text-gray-700">
+                    All double reed instruments: oboe, bassoon, oboe d'amore, English horn, contrabassoon, and historical instruments.
+                </p>
+            </div>
+
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">Is ReedManage free?</h3>
+                <p class="text-gray-700">
+                    Yes! ReedManage is currently free to use. We plan to introduce optional premium features in the future,
+                    but core functionality will always remain free.
+                </p>
+            </div>
+
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">Do I need to track every parameter?</h3>
+                <p class="text-gray-700">
+                    No. Start with the basics (cane brand, quality rating) and add more parameters as you get comfortable.
+                    The app is flexible - track only what matters to you.
+                </p>
+            </div>
+        </div>
+
+        <!-- Getting Started -->
+        <div class="border-b border-gray-200 pb-6">
+            <h2 class="text-2xl font-semibold text-indigo-600 mb-4">Getting Started</h2>
+
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">How do I add my first reed?</h3>
+                <p class="text-gray-700">
+                    Click "Add Reed" in the sidebar and fill in the fields. Don't worry about completing every field - just add what you know.
+                    See our <a href="{% url 'quick_start_guide' %}" class="text-indigo-600 hover:text-indigo-800 underline">Quick Start Guide</a> for detailed instructions.
+                </p>
+            </div>
+
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">What's the difference between single and batch entry?</h3>
+                <p class="text-gray-700">
+                    <strong>Single Entry:</strong> Add one reed at a time with all available fields.<br>
+                    <strong>Batch Entry:</strong> Add multiple reeds at once with customizable fields - perfect for logging several reeds from one reed-making session.
+                </p>
+            </div>
+
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">Can I customize which fields I see?</h3>
+                <p class="text-gray-700">
+                    Yes! In batch entry mode, use the checkboxes at the top to select which parameters to display.
+                </p>
+            </div>
+
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">Where can I learn more about reed parameters?</h3>
+                <p class="text-gray-700">
+                    Check our <a href="{% url 'quick_start_guide' %}" class="text-indigo-600 hover:text-indigo-800 underline">Quick Start Guide</a>
+                    for detailed technical explanations of all parameters including diameter, hardness, flexibility, density, and more.
+                </p>
+            </div>
+        </div>
+
+        <!-- Features -->
+        <div class="border-b border-gray-200 pb-6">
+            <h2 class="text-2xl font-semibold text-indigo-600 mb-4">Features</h2>
+
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">What's the weather feature for?</h3>
+                <p class="text-gray-700">
+                    Weather (temperature and humidity) significantly affects reed performance. ReedManage automatically
+                    fetches weather data when you add a reed to help you understand environmental impacts.
+                </p>
+            </div>
+
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">Where can I see statistics about my reeds?</h3>
+                <p class="text-gray-700">
+                    Go to your Account page and click "View Statistics" to see quality trends, best performing brands,
+                    correlations between parameters, and ML predictions.
+                </p>
+            </div>
+
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">How do I export my data?</h3>
+                <p class="text-gray-700">
+                    Visit your Account page and find the "Download My Data" section. Choose from CSV (spreadsheets),
+                    Excel (formatted), or JSON (developers) formats.
+                </p>
+            </div>
+
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">Can I use ReedManage on my phone?</h3>
+                <p class="text-gray-700">
+                    Yes! ReedManage is a Progressive Web App (PWA). Open it in your mobile browser and select
+                    "Add to Home Screen" (iOS) or "Install App" (Android) for an app-like experience.
+                </p>
+            </div>
+
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">Does it work offline?</h3>
+                <p class="text-gray-700">
+                    Basic functionality works offline thanks to PWA technology. Your data syncs when you're back online.
+                </p>
+            </div>
+        </div>
+
+        <!-- Data & Privacy -->
+        <div class="border-b border-gray-200 pb-6">
+            <h2 class="text-2xl font-semibold text-indigo-600 mb-4">Data & Privacy</h2>
+
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">Is my data secure?</h3>
+                <p class="text-gray-700">
+                    Yes. We use encrypted passwords, rate limiting, HTTPS encryption, and regular security updates.
+                    See our <a href="{% url 'privacy_policy' %}" class="text-indigo-600 hover:text-indigo-800 underline">Privacy Policy</a> for details.
+                </p>
+            </div>
+
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">Can I delete my account?</h3>
+                <p class="text-gray-700">
+                    Yes. <a href="{% url 'contact:contact' %}" class="text-indigo-600 hover:text-indigo-800 underline">Contact us</a>
+                    to request account deletion. We'll permanently remove all your data within 30 days.
+                </p>
+            </div>
+
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">Do you share my data with third parties?</h3>
+                <p class="text-gray-700 mb-2">
+                    <strong>By default: NO.</strong> Your reed data is completely private and belongs to you.
+                </p>
+                <p class="text-gray-700 mb-2">
+                    <strong>Optional Data Contribution Program:</strong> You can choose to share anonymized, aggregated data
+                    to help improve the reed-making industry. In exchange, you get Premium features FREE (a $120/year value).
+                </p>
+                <p class="text-gray-700 text-sm">
+                    Participation is 100% optional, opt-in only, and you can revoke permission anytime.
+                    Learn more about our <a href="{% url 'privacy_policy' %}" class="text-indigo-600 hover:text-indigo-800 underline">Privacy Policy</a>.
+                </p>
+            </div>
+
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">Who can see my reed data?</h3>
+                <p class="text-gray-700 mb-2">
+                    <strong>FREE users:</strong> Only you. Your data is completely private.
+                </p>
+                <p class="text-gray-700 mb-2">
+                    <strong>PREMIUM users:</strong> You can see how your stats compare to anonymized community averages
+                    (e.g., "Your average quality: 3.8 vs. community: 3.4"). Individual data remains private.
+                </p>
+                <p class="text-gray-700 mb-2">
+                    <strong>Data Contributors:</strong> Your anonymized data contributes to industry insights. We never
+                    share identifiable information - only aggregated statistics like "65% of oboists prefer medium hardness."
+                </p>
+            </div>
+
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">What's the Data Contribution Program?</h3>
+                <p class="text-gray-700 mb-2">
+                    A voluntary program where you share anonymized reed data and receive Premium features FREE in exchange.
+                </p>
+                <p class="text-gray-700 text-sm">
+                    <strong>You get:</strong> Premium features ($9.99/month value), community insights, quarterly reports, contributor badge.
+                </p>
+                <p class="text-gray-700 text-sm">
+                    <strong>We share (anonymized only):</strong> Statistical trends with cane manufacturers to help improve products.
+                </p>
+                <p class="text-gray-700 text-sm">
+                    <strong>We NEVER share:</strong> Your name, email, individual reeds, or identifiable information.
+                </p>
+            </div>
+
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">What are Premium features?</h3>
+                <p class="text-gray-700 mb-2">
+                    <strong>Premium ($9.99/month or FREE for Data Contributors):</strong>
+                </p>
+                <ul class="list-disc pl-6 text-gray-700 text-sm space-y-1">
+                    <li>Compare your stats vs. community averages</li>
+                    <li>Advanced ML-powered analytics and predictions</li>
+                    <li>See top-rated brands and popular choices</li>
+                    <li>Custom correlation analysis</li>
+                    <li>Priority support and early feature access</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Troubleshooting -->
+        <div class="pb-6">
+            <h2 class="text-2xl font-semibold text-indigo-600 mb-4">Troubleshooting</h2>
+
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">I forgot my password. What should I do?</h3>
+                <p class="text-gray-700">
+                    <a href="{% url 'contact:contact' %}" class="text-indigo-600 hover:text-indigo-800 underline">Contact us</a>
+                    and we'll help you reset your password. (Automated password reset coming soon!)
+                </p>
+            </div>
+
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">The app isn't working properly. What should I do?</h3>
+                <p class="text-gray-700">
+                    Try: clearing your browser cache, updating your browser, disabling extensions, or using a different browser (Chrome, Safari, Firefox, Edge).
+                    If problems persist, <a href="{% url 'contact:contact' %}" class="text-indigo-600 hover:text-indigo-800 underline">contact us</a> with details.
+                </p>
+            </div>
+
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">I found a bug. How do I report it?</h3>
+                <p class="text-gray-700">
+                    Thank you! Use our <a href="{% url 'contact:contact' %}" class="text-indigo-600 hover:text-indigo-800 underline">contact form</a>
+                    to report bugs. Include what you were doing, what you expected, and what actually happened.
+                </p>
+            </div>
+
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">Can I edit or delete a reed after adding it?</h3>
+                <p class="text-gray-700">
+                    Yes! Go to "All Reeds" in the sidebar to view, edit, or delete any reed in your collection.
+                </p>
+            </div>
+
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">My cane brand isn't in the list. What do I do?</h3>
+                <p class="text-gray-700">
+                    <a href="{% url 'contact:contact' %}" class="text-indigo-600 hover:text-indigo-800 underline">Contact us</a>
+                    and we'll add it to the database immediately.
+                </p>
+            </div>
+        </div>
+
+        <!-- Need More Help? -->
+        <div class="bg-indigo-50 rounded-lg p-6 mt-8">
+            <h2 class="text-xl font-semibold text-gray-900 mb-2">Need More Help?</h2>
+            <p class="text-gray-700 mb-4">
+                For detailed technical information and step-by-step instructions, check out our
+                <a href="{% url 'quick_start_guide' %}" class="text-indigo-600 hover:text-indigo-800 underline font-semibold">Quick Start Guide</a>.
+            </p>
+            <p class="text-gray-700">
+                Have a question not answered here? <a href="{% url 'contact:contact' %}" class="text-indigo-600 hover:text-indigo-800 underline font-semibold">Contact us</a>
+                - we're here to help you make better reeds!
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

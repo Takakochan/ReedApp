@@ -122,6 +122,16 @@ def terms_of_service_view(request):
     return render(request, 'legal/terms.html', {})
 
 
+def faq_view(request):
+    """Frequently Asked Questions page"""
+    return render(request, 'help/faq.html', {})
+
+
+def quick_start_guide_view(request):
+    """Quick Start Guide page"""
+    return render(request, 'help/guide.html', {})
+
+
 def custom_404(request, exception):
     """Custom 404 error page"""
     return render(request, '404.html', {}, status=404)

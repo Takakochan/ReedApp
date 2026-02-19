@@ -5,6 +5,8 @@
 {% url 'setting:top' as path_to_setting %}
 {% url 'account:statistics' as path_to_statistics %}
 {% url 'contact:contact' as path_to_contact %}
+{% url 'faq' as path_to_faq %}
+{% url 'quick_start_guide' as path_to_guide %}
 
 <!-- Mobile fixed sidebar -->
 <div class="fixed left-0 top-0 bottom-0 z-[100] flex flex-col items-center w-16 h-full overflow-hidden bg-indigo-900 sm:hidden">
@@ -65,6 +67,11 @@
 			<a href="{{path_to_contact}}" class="{% if request.path == path_to_contact%}active{% endif%} flex items-center justify-center w-12 h-12 mt-2 rounded hover:bg-indigo-700">
 				<svg class="w-6 h-6 stroke-current" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
 					<path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
+				</svg>
+			</a>
+			<a href="{{path_to_faq}}" class="{% if request.path == path_to_faq%}active{% endif%} flex items-center justify-center w-12 h-12 mt-2 rounded hover:bg-indigo-700">
+				<svg class="w-6 h-6 stroke-current" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
 				</svg>
 			</a>
 			<a class="flex items-center justify-center w-12 h-12 mt-2 rounded hover:bg-indigo-700" href="{% url 'account:account' %}">
@@ -152,6 +159,12 @@
 						<path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
 					</svg>
 					<span class="ml-3 text-base font-medium">Contact</span>
+				</a>
+				<a href="{{path_to_faq}}" class="{% if request.path == path_to_faq or request.path == path_to_guide%}active{% endif%} flex items-center w-full h-14 px-3 mt-2 rounded hover:bg-indigo-700">
+					<svg class="w-7 h-7 stroke-current" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+					</svg>
+					<span class="ml-3 text-base font-medium">Help & FAQ</span>
 				</a>
 			</div>
 		</div>

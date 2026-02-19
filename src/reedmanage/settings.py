@@ -31,7 +31,20 @@ DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
 # For testing custom error pages, temporarily set DEBUG = False
 # DEBUG = False  # Uncomment this line to test error pages
 
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost']  # Required when DEBUG = False
+ALLOWED_HOSTS = [
+    '127.0.0.1',
+    'localhost',
+    '.ngrok-free.app',  # For ngrok free tier tunnels
+    '.ngrok-free.dev',  # For ngrok free tier tunnels (alternative)
+    '.ngrok.io',        # For older ngrok versions
+]  # Required when DEBUG = False
+
+# CSRF trusted origins for ngrok and external access
+CSRF_TRUSTED_ORIGINS = [
+    'https://*.ngrok-free.app',
+    'https://*.ngrok-free.dev',
+    'https://*.ngrok.io',
+]
 
 # Application definition
 
