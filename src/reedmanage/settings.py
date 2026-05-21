@@ -194,6 +194,16 @@ EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')  # Add your Gmai
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 # Security Logging Configuration
+_log_handlers_django = ['console']
+_log_handlers_security = ['console']
+
+# Only use file handlers locally (Heroku has no persistent filesystem)
+if not os.environ.get('DYNO'):
+    logs_dir = os.path.join(BASE_DIR, 'logs')
+    os.makedirs(logs_dir, exist_ok=True)
+    _log_handlers_django = ['file', 'console']
+    _log_handlers_security = ['security_file', 'console']
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -212,7 +222,7 @@ LOGGING = {
             'level': 'INFO',
             'class': 'logging.handlers.RotatingFileHandler',
             'filename': os.path.join(BASE_DIR, 'logs', 'django.log'),
-            'maxBytes': 1024*1024*10,  # 10MB
+            'maxBytes': 1024*1024*10,
             'backupCount': 5,
             'formatter': 'verbose',
         },
@@ -220,7 +230,7 @@ LOGGING = {
             'level': 'WARNING',
             'class': 'logging.handlers.RotatingFileHandler',
             'filename': os.path.join(BASE_DIR, 'logs', 'security.log'),
-            'maxBytes': 1024*1024*10,  # 10MB
+            'maxBytes': 1024*1024*10,
             'backupCount': 10,
             'formatter': 'verbose',
         },
@@ -232,17 +242,17 @@ LOGGING = {
     },
     'loggers': {
         'django': {
-            'handlers': ['file', 'console'],
+            'handlers': _log_handlers_django,
             'level': 'INFO',
             'propagate': False,
         },
         'django.security': {
-            'handlers': ['security_file', 'console'],
+            'handlers': _log_handlers_security,
             'level': 'WARNING',
             'propagate': False,
         },
         'reedsdata.security': {
-            'handlers': ['security_file', 'console'],
+            'handlers': _log_handlers_security,
             'level': 'INFO',
             'propagate': False,
         },
