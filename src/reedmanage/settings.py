@@ -194,15 +194,8 @@ EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')  # Add your Gmai
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 # Security Logging Configuration
-_log_handlers_django = ['console']
-_log_handlers_security = ['console']
-
-# Only use file handlers locally (Heroku has no persistent filesystem)
-if not os.environ.get('DYNO'):
-    logs_dir = os.path.join(BASE_DIR, 'logs')
-    os.makedirs(logs_dir, exist_ok=True)
-    _log_handlers_django = ['file', 'console']
-    _log_handlers_security = ['security_file', 'console']
+_logs_dir = os.path.join(BASE_DIR, 'logs')
+_use_file_logging = not os.environ.get('DATABASE_URL') and os.path.exists(_logs_dir)
 
 LOGGING = {
     'version': 1,
@@ -218,22 +211,24 @@ LOGGING = {
         },
     },
     'handlers': {
-        'file': {
-            'level': 'INFO',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'filename': os.path.join(BASE_DIR, 'logs', 'django.log'),
-            'maxBytes': 1024*1024*10,
-            'backupCount': 5,
-            'formatter': 'verbose',
-        },
-        'security_file': {
-            'level': 'WARNING',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'filename': os.path.join(BASE_DIR, 'logs', 'security.log'),
-            'maxBytes': 1024*1024*10,
-            'backupCount': 10,
-            'formatter': 'verbose',
-        },
+        **({
+            'file': {
+                'level': 'INFO',
+                'class': 'logging.handlers.RotatingFileHandler',
+                'filename': os.path.join(_logs_dir, 'django.log'),
+                'maxBytes': 1024*1024*10,
+                'backupCount': 5,
+                'formatter': 'verbose',
+            },
+            'security_file': {
+                'level': 'WARNING',
+                'class': 'logging.handlers.RotatingFileHandler',
+                'filename': os.path.join(_logs_dir, 'security.log'),
+                'maxBytes': 1024*1024*10,
+                'backupCount': 10,
+                'formatter': 'verbose',
+            },
+        } if _use_file_logging else {}),
         'console': {
             'level': 'INFO',
             'class': 'logging.StreamHandler',
@@ -242,17 +237,17 @@ LOGGING = {
     },
     'loggers': {
         'django': {
-            'handlers': _log_handlers_django,
+            'handlers': ['file', 'console'] if _use_file_logging else ['console'],
             'level': 'INFO',
             'propagate': False,
         },
         'django.security': {
-            'handlers': _log_handlers_security,
+            'handlers': ['security_file', 'console'] if _use_file_logging else ['console'],
             'level': 'WARNING',
             'propagate': False,
         },
         'reedsdata.security': {
-            'handlers': _log_handlers_security,
+            'handlers': ['security_file', 'console'] if _use_file_logging else ['console'],
             'level': 'INFO',
             'propagate': False,
         },
