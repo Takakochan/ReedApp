@@ -111,8 +111,11 @@ Document your setup:
 - Input validation and sanitization
 
 ## Screenshots
+<img width="974" height="734" alt="スクリーンショット 2026-05-21 16 12 43" src="https://github.com/user-attachments/assets/a320fea8-bc7e-426e-9c03-99d0054b97bf" />
 
-*Coming soon - showing data entry form, reed list view, and statistics dashboard*
+<img width="812" height="681" alt="スクリーンショット 2026-05-21 16 13 03" src="https://github.com/user-attachments/assets/2dd3ede9-cff9-4ee4-9d5c-4e681f02f343" />
+
+
 
 ## Getting Started
 
