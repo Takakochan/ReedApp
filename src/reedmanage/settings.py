@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 import os
+import dj_database_url
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -34,10 +35,18 @@ DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
 ALLOWED_HOSTS = [
     '127.0.0.1',
     'localhost',
-    '.ngrok-free.app',  # For ngrok free tier tunnels
-    '.ngrok-free.dev',  # For ngrok free tier tunnels (alternative)
-    '.ngrok.io',        # For older ngrok versions
-]  # Required when DEBUG = False
+    '.ngrok-free.app',
+    '.ngrok-free.dev',
+    '.ngrok.io',
+    '.herokuapp.com',
+]
+
+# Heroku: trust the X-Forwarded-Proto header for HTTPS detection
+if os.environ.get('DYNO'):
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
 
 # CSRF trusted origins for ngrok and external access
 CSRF_TRUSTED_ORIGINS = [
@@ -70,6 +79,7 @@ TAILWIND_APP_NAME = 'theme'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -111,10 +121,10 @@ WSGI_APPLICATION = 'reedmanage.wsgi.application'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    'default': dj_database_url.config(
+        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
+        conn_max_age=600,
+    )
 }
 
 # Password validation
@@ -157,11 +167,11 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
 STATIC_URL = 'static/'
-STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static_project')]
-# Default primary key field type
-# https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
-STATIC_ROOT = os.path.join(os.path.dirname(BASE_DIR), 'static_cdn',
-                           'static_root')
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static_project')] if os.path.exists(os.path.join(BASE_DIR, 'static_project')) else []
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+# Whitenoise for serving static files on Heroku
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(os.path.dirname(BASE_DIR), 'static_cdn',

@@ -110,6 +110,16 @@ Document your setup:
 - Environment-based configuration
 - Input validation and sanitization
 
+## Live Demo
+
+**Try it now:** [https://reedmanage.herokuapp.com](https://reedmanage.herokuapp.com)
+
+| Username | Password |
+|----------|----------|
+| `demo` | `demopass123` |
+
+The demo account is pre-loaded with 60 reeds across oboe, English horn, and bassoon — including physical measurements, performance scores, and weather data — so you can explore all features immediately.
+
 ## Screenshots
 <img width="974" height="734" alt="スクリーンショット 2026-05-21 16 12 43" src="https://github.com/user-attachments/assets/a320fea8-bc7e-426e-9c03-99d0054b97bf" />
 

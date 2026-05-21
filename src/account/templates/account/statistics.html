@@ -68,11 +68,6 @@
         </p>
         {% endif %}
         
-        <!-- Debug info (remove in production) -->
-        <div class="text-xs text-gray-500 mt-2 p-2 bg-gray-100 rounded">
-            Debug: selected_instrument = "{{ selected_instrument|default:'None' }}"<br>
-            Available: {{ available_instruments|join:", "|default:"None" }}
-        </div>
     </div>
     
     <!-- Data Sufficiency Warning -->
@@ -158,11 +153,6 @@
         {% endif %}
         </h3>
         
-        <!-- Debug info for cane brand analysis -->
-        <div class="text-xs text-gray-500 mb-2 p-2 bg-gray-100 rounded">
-            Debug: Analyzing {{ advanced_analytics.cane_brand_analysis.primary_instrument|default:"Unknown" }} - 
-            {{ advanced_analytics.cane_brand_analysis.brand_performance|length }} brands found
-        </div>
         <div class="bg-gray-50 p-6 rounded-lg">
             <!-- ANOVA Results -->
             {% if advanced_analytics.cane_brand_analysis.anova_results %}

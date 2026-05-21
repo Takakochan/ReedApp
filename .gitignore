@@ -105,3 +105,6 @@ burp_session*
 # Markdown files (except README)
 *.md
 !README.md
+
+# Unrelated test/experiment files
+src/reedsdata/instatest.py

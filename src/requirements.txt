@@ -1,6 +1,9 @@
 # Core Django
 Django==4.2.20
 
+# Heroku
+dj-database-url==2.1.0
+
 # Database
 psycopg2-binary==2.9.9
 
