@@ -1,9 +1,10 @@
 {% extends 'base.html' %}
+{% load custom_filters %}
 
 {% block content %}
-<body class="bg-gradient-to-r from-indigo-800 to-blue-900 min-h-screen px-1 py-2 sm:px-4 sm:py-6">
+<div class="bg-gradient-to-r from-indigo-800 to-blue-900 min-h-screen px-1 py-2 sm:px-4 sm:py-6">
   <div class="w-full bg-white px-2 pt-6 pb-6 sm:px-6 sm:pt-10 sm:pb-8 shadow-2xl ring-1 ring-gray-900/5 rounded-xl animate-fade-in">
-    
+
     <h2 class="text-xl sm:text-2xl font-bold text-center text-indigo-800 mb-6 sm:mb-8">My Reeds Data</h2>
 
     <div class="overflow-x-auto">
@@ -20,10 +21,24 @@
           {% for reed in reeds %}
           <tr class="border-t">
             <td class="py-1 px-2 sm:py-2 sm:px-4">{{ reed.reed_ID }}</td>
-            <td class="py-1 px-2 sm:py-2 sm:px-4">{{ reed.evaluation }}</td>
+            <td class="py-1 px-2 sm:py-2 sm:px-4">
+              {% if reed.latest_global_quality is not None %}
+                {{ reed.latest_global_quality }}/10
+              {% else %}
+                —
+              {% endif %}
+            </td>
             <td class="py-1 px-2 sm:py-2 sm:px-4">{{ reed.date|date:"d M Y" }}</td>
-            <td class="py-1 px-2 sm:py-2 sm:px-4 space-x-2">
+            <td class="py-1 px-2 sm:py-2 sm:px-4 space-x-2 whitespace-nowrap">
               <a href="{% url 'reeds:edit_reedsdata' reed.pk %}" class="text-blue-600 hover:underline">Edit</a>
+              <a href="{% url 'reeds:evaluate_detail' reed.pk %}" class="text-indigo-600 hover:underline">Rate</a>
+              <button type="button"
+                      class="pin-btn {% if reed.pk|is_pinned:pinned_ids %}text-indigo-500{% else %}text-gray-300 hover:text-indigo-400{% endif %}"
+                      data-pk="{{ reed.pk }}"
+                      data-url="{% url 'reeds:toggle_pin' reed.pk %}"
+                      title="{% if reed.pk|is_pinned:pinned_ids %}Remove from Selected{% else %}Add to Selected{% endif %}">
+                &#9654;
+              </button>
               <a href="{% url 'reeds:delete_reedsdata' reed.pk %}" class="text-red-600 hover:underline">Delete</a>
             </td>
           </tr>
@@ -37,8 +52,30 @@
     </div>
 
   </div>
-</body>
-
-
+</div>
+<script>
+const CSRF_TOKEN = '{{ csrf_token }}';
+document.querySelectorAll('.pin-btn').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    const url = btn.dataset.url;
+    fetch(url, {
+      method: 'POST',
+      headers: {'X-CSRFToken': CSRF_TOKEN},
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.pinned) {
+        btn.classList.remove('text-gray-300', 'hover:text-indigo-400');
+        btn.classList.add('text-indigo-500');
+        btn.title = 'Remove from Selected';
+      } else {
+        btn.classList.remove('text-indigo-500');
+        btn.classList.add('text-gray-300', 'hover:text-indigo-400');
+        btn.title = 'Add to Selected';
+      }
+    });
+  });
+});
+</script>
 
 {% endblock %}

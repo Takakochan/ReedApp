@@ -101,3 +101,7 @@ burp_session*
 
 # Claude Code settings (local only)
 .claude/settings.local.json
+
+# Markdown files (except README)
+*.md
+!README.md

@@ -27,6 +27,43 @@ document.addEventListener("DOMContentLoaded", function () {
         m2Field.addEventListener("input", updateDensity);
         updateDensity();  // Calculate on page load
     }
+
+    // Reed ID prefix preview
+    const INSTRUMENT_PREFIX = { oboe: 'O', english_horn: 'E', oboe_damore: 'A', bassoon: 'B', contrabassoon: 'C' };
+    const PERIOD_PREFIX = { modern: 'M', classical: 'C', baroque: 'B' };
+    const instrumentSel = document.getElementById('id_instrument');
+    const periodSel = document.getElementById('id_period');
+    const prefixPreview = document.getElementById('prefix-preview');
+
+    function updatePrefixPreview() {
+        if (!prefixPreview) return;
+        const i = INSTRUMENT_PREFIX[instrumentSel ? instrumentSel.value : ''] || '';
+        const p = PERIOD_PREFIX[periodSel ? periodSel.value : ''] || '';
+        prefixPreview.textContent = (p + i) || '—';
+    }
+
+    if (instrumentSel) instrumentSel.addEventListener('change', updatePrefixPreview);
+    if (periodSel) periodSel.addEventListener('change', updatePrefixPreview);
+    updatePrefixPreview();
+
+    // Instrument tooltip functionality
+    const instrumentContainer = document.getElementById("instrument-container");
+    const instrumentTooltip = document.getElementById("instrument-tooltip");
+    let instrumentHoverTimeout;
+
+    if (instrumentContainer && instrumentTooltip) {
+        instrumentContainer.addEventListener("mouseenter", function() {
+            instrumentHoverTimeout = setTimeout(function() {
+                instrumentTooltip.classList.remove("opacity-0", "invisible");
+                instrumentTooltip.classList.add("opacity-100", "visible");
+            }, 6000);
+        });
+        instrumentContainer.addEventListener("mouseleave", function() {
+            clearTimeout(instrumentHoverTimeout);
+            instrumentTooltip.classList.add("opacity-0", "invisible");
+            instrumentTooltip.classList.remove("opacity-100", "visible");
+        });
+    }
 });
 </script>
 
@@ -39,7 +76,33 @@ document.addEventListener("DOMContentLoaded", function () {
         <!-- Form Fields Grid - matching add.html structure -->
         <div class="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-4 md:gap-5 lg:gap-6">
             {% for field in form %}
-                {% if field.name == 'm1' %}
+                {% if field.name == 'instrument' %}
+                    <div class="space-y-1 p-1 min-w-0 relative">
+                        <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-indigo-900 truncate">{{ field.label }} <span class="text-red-500">*</span></label>
+                        <div id="instrument-container" class="relative">
+                            {{ field|add_class:"w-full max-w-full px-2 py-1.5 text-sm border border-gray-200 rounded focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500" }}
+                            <div id="instrument-tooltip" class="absolute left-0 bottom-full mb-2 w-80 p-4 bg-white text-indigo-800 text-sm shadow-xl rounded-lg border border-indigo-200 z-[9998] opacity-0 invisible transition-all duration-300 pointer-events-none">
+                                <h3 class="font-bold mb-2 text-indigo-900">Can't find your instrument?</h3>
+                                <p class="mb-2">If your instrument is not listed, please <a href="{% url 'contact:contact' %}" class="text-indigo-600 underline hover:text-indigo-800">contact us</a> and we will add it.</p>
+                            </div>
+                        </div>
+                        {% if field.errors %}<p class="text-xs text-red-600 mt-1">{{ field.errors.0 }}</p>{% endif %}
+                    </div>
+
+                {% elif field.name == 'period' %}
+                    <div class="space-y-1 p-1 min-w-0">
+                        <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-indigo-900 truncate">{{ field.label }} <span class="text-red-500">*</span></label>
+                        {{ field|add_class:"w-full max-w-full px-2 py-1.5 text-sm border border-gray-200 rounded focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500" }}
+                        {% if field.errors %}<p class="text-xs text-red-600 mt-1">{{ field.errors.0 }}</p>{% endif %}
+                    </div>
+
+                    <!-- Reed ID prefix preview -->
+                    <div class="space-y-1 p-1 min-w-0">
+                        <label class="block text-sm font-medium text-indigo-900 truncate">Reed ID Prefix</label>
+                        <span id="prefix-preview" class="inline-block px-3 py-2 bg-indigo-50 border border-indigo-200 rounded-lg text-sm font-mono text-indigo-800 min-w-[4rem] text-center">—</span>
+                    </div>
+
+                {% elif field.name == 'm1' %}
                     <div class="space-y-1 p-1 min-w-0">
                         <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-indigo-900 truncate">Dry Mass M1</label>
                         {{ field|add_class:"w-full max-w-full px-2 py-1.5 text-sm border border-gray-200 rounded focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500" }}
@@ -54,6 +117,11 @@ document.addEventListener("DOMContentLoaded", function () {
                         <label for="id_density_auto_display" class="block text-sm font-medium text-indigo-900 truncate">Calculated Density</label>
                         {{ form.density_auto_display|add_class:"w-full max-w-full px-2 py-1.5 text-sm border border-gray-200 rounded bg-gray-50 text-gray-600" }}
                     </div>
+
+                {% elif field.name == 'reed_ID' %}
+                    <div class="space-y-1 p-1 min-w-0">
+                        <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-indigo-900 truncate">{{ field.label }}</label>
+                        {{ field|add_class:"w-full max-w-full px-2 py-1.5 text-sm border border-gray-200 rounded bg-gray-50 text-gray-600 font-mono"|attr:"readonly:readonly" }}
 
                 {% elif field.name != 'density_auto_display' %}
                     <div class="space-y-1 p-1 min-w-0">

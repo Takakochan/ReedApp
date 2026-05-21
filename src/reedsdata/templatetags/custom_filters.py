@@ -9,9 +9,30 @@ def get_attr(obj, attr_name):
 
 
 @register.filter
+def make_range(value):
+    """Return range(value) so templates can iterate N times."""
+    try:
+        return range(int(value))
+    except (ValueError, TypeError):
+        return range(0)
+
+
+@register.filter
+def is_list(value):
+    """Return True if value is a list or tuple."""
+    return isinstance(value, (list, tuple))
+
+
+@register.filter
 def get_item(dictionary, key):
     """Get item from dictionary"""
     return dictionary.get(key, '')
+
+
+@register.filter
+def is_pinned(pk, pinned_ids):
+    """Return True if pk is in the pinned_ids set."""
+    return pk in pinned_ids
 
 
 @register.filter

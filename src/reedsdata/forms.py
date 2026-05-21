@@ -14,7 +14,7 @@ class ViewUser:
         try:
             data = Checkbox_for_setting.objects.get(user=self.current_user)
             l = data.checkboxsetting
-            l = 'instrument,reed_ID,' + l
+            l = 'instrument,period,reed_ID,' + l
             return l
         except Checkbox_for_setting.DoesNotExist:
             return []
@@ -67,6 +67,32 @@ class Caneform(forms.ModelForm):
         if 'shaper_model' in self.fields:
             self.fields['shaper_model'].label = 'Shaper Model'
             
+        # Set choices for period field
+        if 'period' in self.fields:
+            self.fields['period'].choices = [
+                ('', '---------'),
+                ('modern', 'Modern'),
+                ('classical', 'Classical'),
+                ('baroque', 'Baroque'),
+            ]
+            self.fields['period'].required = True
+
+        # Set grouped choices for instrument field
+        if 'instrument' in self.fields:
+            self.fields['instrument'].choices = [
+                ('', '---------'),
+                ('Oboe Family', [
+                    ('oboe', 'Oboe'),
+                    ('english_horn', 'English Horn'),
+                    ('oboe_damore', "Oboe d'Amore"),
+                ]),
+                ('Bassoon Family', [
+                    ('bassoon', 'Bassoon'),
+                    ('contrabassoon', 'Contrabassoon'),
+                ]),
+            ]
+            self.fields['instrument'].required = True
+
         # Set custom label for diameter field
         if 'diameter' in self.fields:
             self.fields['diameter'].label = 'Cane Diameter'
@@ -96,7 +122,7 @@ class Caneform(forms.ModelForm):
                 additional_fields.extend(['m1', 'm2', 'density_auto_display'])
             
             # Always include mandatory fields
-            mandatory_fields = ['reed_ID', 'instrument', 'cane_brand']
+            mandatory_fields = ['reed_ID', 'instrument', 'period', 'cane_brand']
             
             # Combine all included fields
             all_form_fields = list(set(mandatory_fields + settings_selected_list + additional_fields))
@@ -186,6 +212,14 @@ class Caneform(forms.ModelForm):
                     self.fields[field_name].widget.attrs.update(
                         {'class': f'{existing} {cls}'})
 
+        # Reorder fields: instrument → period → reed_ID at the front
+        front = ['instrument', 'period', 'reed_ID']
+        present_front = [f for f in front if f in self.fields]
+        if present_front:
+            rest = [f for f in self.fields if f not in front]
+            ordered = {f: self.fields[f] for f in present_front + rest if f in self.fields}
+            self.fields = ordered
+
         # Reorder fields to put density_auto_display after m1 and m2
         if 'density_auto_display' in self.fields and ('m1' in self.fields or 'm2' in self.fields):
             field_order = []
@@ -269,6 +303,9 @@ class Caneform(forms.ModelForm):
         model = Reedsdata
         fields = '__all__'
         widgets = {
+            'instrument': forms.Select(attrs={
+                'class': 'w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white',
+            }),
             'location': forms.TextInput(attrs={
                 'class': 'w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white',
                 'placeholder': 'e.g., Boston, MA or Concert Hall Name',

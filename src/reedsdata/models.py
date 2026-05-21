@@ -6,15 +6,29 @@ from django.core.validators import RegexValidator, MinValueValidator, MaxValueVa
 
 # Create your models here.
 class Reedsdata(models.Model):
+
+    class Instrument(models.TextChoices):
+        OBOE = 'oboe', 'Oboe'
+        BASSOON = 'bassoon', 'Bassoon'
+        ENGLISH_HORN = 'english_horn', 'English Horn'
+        OBOE_DAMORE = 'oboe_damore', "Oboe d'Amore"
+        CONTRABASSOON = 'contrabassoon', 'Contrabassoon'
+
+    class Period(models.TextChoices):
+        MODERN = 'modern', 'Modern'
+        CLASSICAL = 'classical', 'Classical'
+        BAROQUE = 'baroque', 'Baroque'
+
     reed_ID = models.CharField(
-        null=True, 
+        null=True,
         max_length=20,
         validators=[RegexValidator(
             regex=r'^[A-Za-z0-9_-]+$',
             message='Reed ID can only contain letters, numbers, hyphens, and underscores'
         )]
     )
-    instrument = models.CharField(null=True, max_length=20)
+    instrument = models.CharField(null=True, blank=True, max_length=20, choices=Instrument.choices)
+    period = models.CharField(null=True, blank=True, max_length=20, choices=Period.choices)
     staple_model = models.CharField(null=True, max_length=20)
 
     def __str__(self):
@@ -250,6 +264,15 @@ class Reedsdata(models.Model):
     def get_fields(self):
         return [(field.name, getattr(self, field.name))
                 for field in Reedsdata._meta.fields]
+
+
+class PinnedReed(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='pinned_reeds')
+    reed = models.ForeignKey(Reedsdata, on_delete=models.CASCADE, related_name='pinned_by')
+    created = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ['user', 'reed']
 
 
 # =====================

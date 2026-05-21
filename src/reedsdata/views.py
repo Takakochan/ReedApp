@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import ListView
 from django.contrib.auth.decorators import login_required
 import pandas as pd
-from .models import Reedsdata, UserParameter, Parameter
+from .models import Reedsdata, UserParameter, Parameter, PinnedReed
 from .forms import Caneform, ViewUser
 from usersettings.models import Checkbox_for_setting
 from .security import require_reed_owner, log_suspicious_activity, rate_limit_user
@@ -61,6 +61,38 @@ class ReedsdataListView(ListView):
 #    return render(request, 'reedsdata/edit.html', context)
 
 
+INSTRUMENT_PREFIX = {
+    'oboe': 'O', 'english_horn': 'E', 'oboe_damore': 'A',
+    'bassoon': 'B', 'contrabassoon': 'C',
+}
+PERIOD_PREFIX = {'modern': 'M', 'classical': 'C', 'baroque': 'B'}
+
+
+def get_next_reed_number(prefix, user):
+    """Find the highest existing number for this prefix and return next."""
+    import re
+    pattern = re.compile(r'^' + re.escape(prefix) + r'(\d+)$')
+    existing = Reedsdata.objects.filter(
+        reedauthor=user, reed_ID__startswith=prefix
+    ).values_list('reed_ID', flat=True)
+    max_num = 0
+    for rid in existing:
+        m = pattern.match(rid)
+        if m:
+            max_num = max(max_num, int(m.group(1)))
+    return max_num + 1
+
+
+def get_next_numbers_by_prefix(user):
+    """Return a dict of prefix → next_number for all known prefixes."""
+    result = {}
+    for instrument, ip in INSTRUMENT_PREFIX.items():
+        for period, pp in PERIOD_PREFIX.items():
+            prefix = pp + ip
+            result[prefix] = get_next_reed_number(prefix, user)
+    return result
+
+
 @login_required
 @rate_limit_user(max_requests=30, window_minutes=15)
 @log_suspicious_activity("DATA_ENTRY")
@@ -109,6 +141,7 @@ def data_entry(request):
         'last_location_data': json.dumps(last_location_data),
         'has_previous_location': bool(last_location_data),
         'last_location_display': last_location_data,
+        'next_numbers': json.dumps(get_next_numbers_by_prefix(request.user)),
     }
     return render(request, 'reedsdata/add.html', context)
 
@@ -130,7 +163,8 @@ def data_entry(request):
 @login_required
 def reedsdata_list(request):
     reeds = Reedsdata.objects.filter(reedauthor=request.user).order_by('-date')
-    return render(request, 'reedsdata/reedsdata_list.html', {'reeds': reeds})
+    pinned_ids = set(PinnedReed.objects.filter(user=request.user).values_list('reed_id', flat=True))
+    return render(request, 'reedsdata/reedsdata_list.html', {'reeds': reeds, 'pinned_ids': pinned_ids})
 
 
 @login_required
@@ -216,356 +250,137 @@ def delete_reedsdata(request, pk):
                   {'object': instance})
 
 
-from django.forms import modelformset_factory
-from .forms import Caneform, ViewUser
-from .models import Reedsdata
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, redirect
-
-from django.forms import modelformset_factory
-from .forms import Caneform, ViewUser
-from .models import Reedsdata
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, redirect
-from django.utils import timezone
-
-
-@login_required
-def data_entry_batch(request):
-    # Default number of canes to display
-    default_num_can = 5
-
-    # Determine how many rows the user wants
-    num_can = default_num_can
-    if request.method == 'POST' and 'num_can' in request.POST:
-        try:
-            num_can = int(request.POST.get('num_can', default_num_can))
-            if num_can < 1:
-                num_can = default_num_can
-        except ValueError:
-            num_can = default_num_can
-
-    # Create a formset with dynamic number of extra forms
-    CaneFormSet = modelformset_factory(Reedsdata,
-                                       form=Caneform,
-                                       extra=num_can,
-                                       can_delete=False)
-
-    if request.method == 'POST' and 'num_can' not in request.POST:
-        # Actual submission of forms
-        formset = CaneFormSet(request.POST,
-                              queryset=Reedsdata.objects.none(),
-                              form_kwargs={
-                                  'user': request.user,
-                                  'mode': 'batch'
-                              })
-        if formset.is_valid():
-            for form in formset:
-                obj = form.save(commit=False)
-                obj.reedauthor = request.user
-
-                # Auto-calculate density if selected
-                if 'density_auto' in ViewUser(request.user).get_field_list():
-                    m1 = form.cleaned_data.get('m1')
-                    m2 = form.cleaned_data.get('m2')
-                    if m1 is not None and m2:
-                        try:
-                            obj.density = m1 / (m1 + m2)
-                        except ZeroDivisionError:
-                            obj.density = None
-                obj.save()
-            return redirect('reeds:reedsdata_list')
-    else:
-        # Display empty formset
-        formset = CaneFormSet(queryset=Reedsdata.objects.none(),
-                              form_kwargs={
-                                  'user': request.user,
-                                  'mode': 'batch'
-                              })
-
-    context = {
-        'formset': formset,
-        'num_can': num_can,
-    }
-    return render(request, 'reedsdata/add_batch.html', context)
-
-
-from .forms import BatchSettingsForm
-
-
-@login_required
-def batch_settings(request):
-    if request.method == 'POST':
-        form = BatchSettingsForm(request.POST)
-        if form.is_valid():
-            # store choices in session for next step
-            request.session['batch_parameters'] = form.cleaned_data[
-                'parameters']
-            request.session['batch_num_can'] = form.cleaned_data['num_can']
-            return redirect('reeds:add_batch')
-    else:
-        form = BatchSettingsForm()
-
-    return render(request, 'reedsdata/batch_settings.html', {'form': form})
-
-
-from django.shortcuts import render, redirect
-from .forms import Caneform
-from django.forms import modelformset_factory
-from .models import Reedsdata
-
-
 @login_required
 def add_batch(request):
-    # ViewUser と同じロジックを使って、フォームに表示される実際のフィールドを取得
-    from .forms import ViewUser
-    field_list_str = ViewUser(request.user).get_field_list()
-    if field_list_str:
-        # カンマ区切りの文字列を分割
-        selected_field_names = [field.strip() for field in field_list_str.split(',') if field.strip()]
-    else:
-        selected_field_names = []
-
-    # フィールド名の処理
-    mapped_field_names = []
-    for field_name in selected_field_names:
-        # density_auto の場合は、それ自体を追加せずに m1, m2, density_auto_display を追加
-        if field_name == 'density_auto':
-            mapped_field_names.extend(['m1', 'm2', 'density_auto_display'])
-        else:
-            mapped_field_names.append(field_name)
-
-    # Get user's selected parameters from settings plus all evaluation fields
-    from .forms import ViewUser
+    from django.contrib import messages
     from .templatetags.custom_filters import is_evaluation_field
-    
-    # Get the user's selected field list from settings
-    selected_field_list = ViewUser(request.user).get_field_list()
-    if selected_field_list:
-        selected_fields = [field.strip() for field in selected_field_list.split(',') if field.strip()]
-    else:
-        selected_fields = []
-    
-    # Get UserParameters that are either selected OR evaluation fields
-    user_params = UserParameter.objects.filter(
-        user=request.user
-    ).select_related('parameter')
-    
-    # Add related fields if their parent fields are selected
-    additional_fields = []
-    if 'gouging_machine' in selected_fields:
-        additional_fields.extend(['bed_diameter', 'blade_diameter'])
-    if 'shaper' in selected_fields:
-        additional_fields.append('shaper_model')
-    if 'density_auto' in selected_fields:
-        additional_fields.extend(['m1', 'm2', 'density_auto_display'])
-    
-    # Always include mandatory fields (like add.html)
-    mandatory_fields = ['reed_ID', 'instrument', 'cane_brand']
-    
-    # Combine all included fields: mandatory + selected + related
-    all_included_fields = list(set(mandatory_fields + selected_fields + additional_fields))
-    
-    # Filter to include: mandatory fields, selected fields, related fields, OR evaluation fields
-    filtered_params = []
-    for up in user_params:
-        param_name = up.parameter.name
-        if (param_name in all_included_fields or 
-            is_evaluation_field(param_name)):
-            filtered_params.append(up)
-    
-    # Sort by order, but group related fields with their parents
-    def get_sort_key(up):
-        param_name = up.parameter.name
-        base_order = up.order
-        
-        # Adjust order for related fields to appear right after their parent
-        if param_name == 'bed_diameter':
-            # Find gouging_machine order and add 0.1
-            gouging_param = next((p for p in filtered_params if p.parameter.name == 'gouging_machine'), None)
-            return gouging_param.order + 0.1 if gouging_param else base_order
-        elif param_name == 'blade_diameter':
-            # Find gouging_machine order and add 0.2
-            gouging_param = next((p for p in filtered_params if p.parameter.name == 'gouging_machine'), None)
-            return gouging_param.order + 0.2 if gouging_param else base_order
-        elif param_name == 'shaper_model':
-            # Find shaper order and add 0.1
-            shaper_param = next((p for p in filtered_params if p.parameter.name == 'shaper'), None)
-            return shaper_param.order + 0.1 if shaper_param else base_order
-        elif param_name == 'm1':
-            # Find density_auto_display order and add 0.1
-            density_auto_param = next((p for p in filtered_params if p.parameter.name == 'density_auto_display'), None)
-            return density_auto_param.order + 0.1 if density_auto_param else base_order
-        elif param_name == 'm2':
-            # Find density_auto_display order and add 0.2  
-            density_auto_param = next((p for p in filtered_params if p.parameter.name == 'density_auto_display'), None)
-            return density_auto_param.order + 0.2 if density_auto_param else base_order
-        elif param_name == 'density_auto_display':
-            # density_auto_display should come first, then m1, then m2
-            return base_order
+
+    # Fields that are "common" (set once for all reeds)
+    COMMON_FIELDS = ['instrument', 'period', 'cane_brand', 'gouging_machine',
+                     'shaper', 'shaper_model', 'staple_model']
+
+    # Get user's per-reed measurement fields from their settings
+    field_list_str = ViewUser(request.user).get_field_list()
+    selected_fields = [f.strip() for f in field_list_str.split(',') if f.strip()] if field_list_str else []
+    # Expand density_auto → m1, m2
+    per_reed_fields = []
+    for f in selected_fields:
+        if f in COMMON_FIELDS or f in ['reed_ID', 'instrument', 'period']:
+            continue
+        if f == 'density_auto':
+            per_reed_fields.extend(['m1', 'm2'])
         else:
-            return base_order
-    
-    user_params = sorted(filtered_params, key=get_sort_key)
+            per_reed_fields.append(f)
+    # Add evaluation fields
+    user_params_all = UserParameter.objects.filter(user=request.user).select_related('parameter')
+    for up in user_params_all:
+        if is_evaluation_field(up.parameter.name) and up.parameter.name not in per_reed_fields:
+            per_reed_fields.append(up.parameter.name)
 
-    # デフォルト行数
-    num_can = request.POST.get('num_can', 5)
+    def generate_prefix(instrument, period):
+        i = INSTRUMENT_PREFIX.get(instrument, '')
+        p = PERIOD_PREFIX.get(period, '')
+        return p + i
 
-    # フォームセット作成
-    CaneFormSet = modelformset_factory(Reedsdata,
-                                       form=Caneform,
-                                       extra=int(num_can),
-                                       can_delete=False)
+    if request.method == 'POST' and request.POST.get('action') == 'save_common':
+        # Step 1 submitted — save to session and redirect back (GET)
+        for f in COMMON_FIELDS:
+            request.session[f'batch_{f}'] = request.POST.get(f, '')
+        # Auto-generate prefix from instrument + period
+        instrument = request.POST.get('instrument', '')
+        period = request.POST.get('period', '')
+        auto_prefix = generate_prefix(instrument, period)
+        request.session['batch_prefix'] = auto_prefix
+        request.session['batch_next_num'] = get_next_reed_number(auto_prefix, request.user)
+        request.session['batch_num'] = request.POST.get('num_reeds', '5')
+        return redirect('reeds:add_batch')
 
-    if request.method == "POST" and 'form-TOTAL_FORMS' in request.POST:
-        # This is a data submission (has formset management data)
-        formset = CaneFormSet(request.POST,
-                              queryset=Reedsdata.objects.none(),
-                              form_kwargs={'user': request.user, 'mode': 'batch'})
-        
-        # Custom validation - only validate forms with actual data
-        valid_forms = []
-        has_errors = False
-        reed_ids_in_batch = []  # Track reed_IDs in this batch for uniqueness
-        
-        for form in formset:
-            if form.has_changed():
-                # First check if form is valid before accessing cleaned_data
-                if form.is_valid():
-                    # Check if form has any meaningful data (not just empty strings)
-                    non_empty_data = {k: v for k, v in form.cleaned_data.items() 
-                                     if v is not None and v != '' and k != 'DELETE'}
-                    
-                    if len(non_empty_data) > 0:
-                        # This form has data, check if it has a Reed ID
-                        reed_id = form.cleaned_data.get('reed_ID')
-                        
-                        if not reed_id or reed_id.strip() == '':
-                            # No Reed ID provided - ignore this row (don't save it)
-                            print(f"Skipping row without Reed ID (has other data but no Reed ID)")
-                            continue
-                        else:
-                            # Reed ID is provided, check for duplicates within this batch
-                            if reed_id in reed_ids_in_batch:
-                                has_errors = True
-                                print(f"Form error: Duplicate reed_ID '{reed_id}' in batch")
-                                form.add_error('reed_ID', f'Reed ID "{reed_id}" must be unique - already used in this batch.')
-                            else:
-                                reed_ids_in_batch.append(reed_id)
-                                valid_forms.append(form)
-                else:
-                    # Form is invalid but has changes - check if it has Reed ID before treating as error
-                    form_data = form.data
-                    reed_id_field = None
-                    
-                    # Find the reed_ID field for this form
-                    for field_name in form_data:
-                        if field_name.endswith('-reed_ID'):
-                            reed_id_field = form_data.get(field_name)
-                            break
-                    
-                    if not reed_id_field or reed_id_field.strip() == '':
-                        # No Reed ID, ignore this invalid form
-                        print(f"Ignoring invalid form without Reed ID")
-                        continue
-                    else:
-                        # Has Reed ID but form is invalid - this is an error
-                        has_errors = True
-                        print(f"Form validation errors for Reed ID '{reed_id_field}': {form.errors}")
-        
-        # Check formset-level errors (but these are less important now)
-        if formset.non_form_errors():
-            print(f"Formset non-form errors: {formset.non_form_errors()}")
-            # Don't treat formset errors as blocking since we're doing custom validation
-        
-        if not has_errors and len(valid_forms) > 0:
-            saved_count = 0
-            updated_count = 0
-            for form in valid_forms:
-                try:
-                    instance = form.save(commit=False)
-                    reed_id = form.cleaned_data.get('reed_ID')
-                    
-                    # Check if a reed with this ID already exists for this user
-                    existing_reed = Reedsdata.objects.filter(reed_ID=reed_id, reedauthor=request.user).first()
-                    
-                    if existing_reed:
-                        # Update existing reed with new data
-                        for field_name, field_value in form.cleaned_data.items():
-                            if field_name != 'reed_ID' and field_value is not None and field_value != '':
-                                setattr(existing_reed, field_name, field_value)
-                        
-                        # Auto-calculate density if needed
-                        if 'density_auto' in ViewUser(request.user).get_field_list():
-                            m1 = form.cleaned_data.get('m1')
-                            m2 = form.cleaned_data.get('m2')
-                            if m1 is not None and m2 is not None and m2 != 0:
-                                try:
-                                    existing_reed.density = m1 / (m1 + m2)
-                                except (ZeroDivisionError, TypeError):
-                                    existing_reed.density = None
-                        
-                        existing_reed.save()
-                        updated_count += 1
-                    else:
-                        # Create new reed
-                        instance.reedauthor = request.user
-                        
-                        # Auto-calculate density if needed
-                        if 'density_auto' in ViewUser(request.user).get_field_list():
-                            m1 = form.cleaned_data.get('m1')
-                            m2 = form.cleaned_data.get('m2')
-                            if m1 is not None and m2 is not None and m2 != 0:
-                                try:
-                                    instance.density = m1 / (m1 + m2)
-                                except (ZeroDivisionError, TypeError):
-                                    instance.density = None
-                        
-                        instance.save()
-                        saved_count += 1
-                        
-                except Exception as e:
-                    print(f"Error saving reed {reed_id}: {e}")
-                    # Continue with other forms
-            
-            # Show success message and redirect to reed list
-            from django.contrib import messages
-            total_count = saved_count + updated_count
-            if total_count > 0:
-                if saved_count > 0 and updated_count > 0:
-                    messages.success(request, f'Successfully created {saved_count} new reed(s) and updated {updated_count} existing reed(s).')
-                elif saved_count > 0:
-                    messages.success(request, f'Successfully created {saved_count} new reed(s).')
-                else:
-                    messages.success(request, f'Successfully updated {updated_count} existing reed(s).')
-                return redirect('reeds:reedsdata_list')
-            else:
-                messages.warning(request, 'No data was entered. Please fill in at least one row with data.')
+    elif request.method == 'POST' and request.POST.get('action') == 'save_reeds':
+        # Step 2 submitted — save reeds
+        num = int(request.POST.get('num_reeds', 0))
+        common = {f: request.session.get(f'batch_{f}', '') for f in COMMON_FIELDS}
+        saved, skipped, errors = 0, 0, []
+
+        for i in range(num):
+            reed_id = request.POST.get(f'reed_id_{i}', '').strip()
+            if not reed_id:
+                skipped += 1
+                continue
+            try:
+                obj, created = Reedsdata.objects.get_or_create(
+                    reed_ID=reed_id, reedauthor=request.user
+                )
+                # Apply common values
+                for f, v in common.items():
+                    if v:
+                        setattr(obj, f, v)
+                # Apply per-reed values
+                for f in per_reed_fields:
+                    val = request.POST.get(f'{f}_{i}', '').strip()
+                    if val:
+                        # Convert numeric fields
+                        field_obj = Reedsdata._meta.get_field(f)
+                        if field_obj.get_internal_type() in ('FloatField', 'IntegerField'):
+                            try:
+                                val = float(val) if field_obj.get_internal_type() == 'FloatField' else int(val)
+                            except ValueError:
+                                continue
+                        setattr(obj, f, val)
+                # Auto density
+                m1 = request.POST.get(f'm1_{i}', '')
+                m2 = request.POST.get(f'm2_{i}', '')
+                if m1 and m2:
+                    try:
+                        obj.density = float(m1) / (float(m1) + float(m2))
+                    except (ValueError, ZeroDivisionError):
+                        pass
+                obj.save()
+                saved += 1
+            except Exception as e:
+                errors.append(f'Row {i+1}: {e}')
+
+        if errors:
+            messages.error(request, 'Some rows had errors: ' + '; '.join(errors))
+        if saved:
+            messages.success(request, f'Successfully saved {saved} reed(s).' + (f' {skipped} empty rows skipped.' if skipped else ''))
+            return redirect('reeds:reedsdata_list')
         else:
-            # Show validation errors with details
-            from django.contrib import messages
-            error_details = []
-            
-            # Collect specific errors from our custom validation
-            for i, form in enumerate(formset):
-                if form.errors:
-                    for field, errors in form.errors.items():
-                        for error in errors:
-                            error_details.append(f"Row {i+1} - {error}")
-            
-            if error_details:
-                messages.error(request, f'Please fix these errors: {"; ".join(error_details)}')
-            else:
-                messages.error(request, 'Please check your data and try again.')
-    else:
-        # This is either GET request or POST request with just num_can (update rows)
-        formset = CaneFormSet(queryset=Reedsdata.objects.none(),
-                              form_kwargs={'user': request.user, 'mode': 'batch'})
+            messages.warning(request, 'No reeds were saved. Please fill in at least one Reed ID.')
 
-    return render(request, "reedsdata/add_batch.html", {
-        "formset": formset,
-        "user_params": user_params,
-        "num_can": num_can,
+    # GET (or failed POST) — render page
+    # Load session values for Step 1
+    common_vals = {f: request.session.get(f'batch_{f}', '') for f in COMMON_FIELDS}
+    prefix = request.session.get('batch_prefix', '')
+    next_num = request.session.get('batch_next_num', 1)
+    num_reeds = int(request.session.get('batch_num', 5))
+
+    # Get field labels for per-reed fields
+    param_labels = {}
+    for up in user_params_all:
+        param_labels[up.parameter.name] = up.parameter.display_name
+    param_labels['m1'] = 'Dry Mass'
+    param_labels['m2'] = 'Wet Mass'
+
+    instrument_choices = [
+        ('', '---------'),
+        ('Oboe Family', [('oboe', 'Oboe'), ('english_horn', 'English Horn'), ('oboe_damore', "Oboe d'Amore")]),
+        ('Bassoon Family', [('bassoon', 'Bassoon'), ('contrabassoon', 'Contrabassoon')]),
+    ]
+    period_choices = [('', '---------'), ('modern', 'Modern'), ('classical', 'Classical'), ('baroque', 'Baroque')]
+
+    return render(request, 'reedsdata/add_batch.html', {
+        'common_vals': common_vals,
+        'common_fields': COMMON_FIELDS,
+        'per_reed_fields': per_reed_fields,
+        'param_labels': param_labels,
+        'prefix': prefix,
+        'next_num': next_num,
+        'num_reeds': num_reeds,
+        'instrument_choices': instrument_choices,
+        'period_choices': period_choices,
+        'cane_brand_choices': Reedsdata.CANE_BRAND_CHOICES,
+        'gouging_machine_choices': Reedsdata.GOUGING_MACHINE_CHOICES,
+        'shaper_choices': Reedsdata.SHAPER_CHOICES,
     })
 
 
@@ -747,6 +562,246 @@ def get_weather_data(request):
     return JsonResponse({
         "success": False,
         "error": "Only GET method allowed"
+    })
+
+
+@login_required
+@require_reed_owner
+def quick_evaluate(request, pk):
+    """AJAX endpoint for quick evaluation of a reed from the list page."""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'POST required'}, status=405)
+
+    ALLOWED_FIELDS = {
+        'playing_ease', 'intonation', 'tone_color', 'response',
+        'global_quality_first_impression', 'global_quality_second_impression',
+        'global_quality_third_impression',
+        'counts_rehearsal', 'counts_concert', 'note',
+    }
+    INTEGER_FIELDS = {
+        'playing_ease', 'intonation', 'tone_color', 'response',
+        'global_quality_first_impression', 'global_quality_second_impression',
+        'global_quality_third_impression',
+        'counts_rehearsal', 'counts_concert',
+    }
+
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'error': 'Invalid JSON'}, status=400)
+
+    reed = get_object_or_404(Reedsdata, pk=pk, reedauthor=request.user)
+
+    for field, value in data.items():
+        if field not in ALLOWED_FIELDS:
+            continue
+        if value == '' or value is None:
+            setattr(reed, field, None)
+        elif field in INTEGER_FIELDS:
+            try:
+                int_val = int(value)
+                if field in {'playing_ease', 'intonation', 'tone_color', 'response',
+                             'global_quality_first_impression', 'global_quality_second_impression',
+                             'global_quality_third_impression'}:
+                    if not (0 <= int_val <= 10):
+                        return JsonResponse({'success': False, 'error': f'{field} must be between 0 and 10'}, status=400)
+                setattr(reed, field, int_val)
+            except (ValueError, TypeError):
+                return JsonResponse({'success': False, 'error': f'Invalid value for {field}'}, status=400)
+        else:
+            # TextField (note)
+            setattr(reed, field, str(value)[:45])
+
+    reed.save()
+    return JsonResponse({'success': True})
+
+
+@login_required
+def toggle_pin(request, pk):
+    """Toggle pinned status for a reed. Returns JSON {pinned: bool}."""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=405)
+    reed = get_object_or_404(Reedsdata, pk=pk, reedauthor=request.user)
+    pin, created = PinnedReed.objects.get_or_create(user=request.user, reed=reed)
+    if not created:
+        pin.delete()
+        return JsonResponse({'pinned': False})
+    return JsonResponse({'pinned': True})
+
+
+EVALUATION_FIELDS = [
+    'stiffness', 'playing_ease', 'intonation', 'tone_color', 'response',
+    'global_quality_first_impression', 'global_quality_second_impression',
+    'global_quality_third_impression',
+    'counts_rehearsal', 'counts_concert',
+    'location', 'temperature', 'humidity', 'air_pressure', 'weather_description',
+    'chamber_temperature', 'chamber_humidity',
+    'note',
+]
+
+INTEGER_EVAL_FIELDS = {
+    'stiffness', 'playing_ease', 'intonation', 'tone_color', 'response',
+    'global_quality_first_impression', 'global_quality_second_impression',
+    'global_quality_third_impression',
+    'counts_rehearsal', 'counts_concert',
+}
+
+FLOAT_EVAL_FIELDS = {
+    'temperature', 'humidity', 'air_pressure', 'chamber_temperature', 'chamber_humidity',
+}
+
+
+@login_required
+def evaluate_list(request):
+    """Card view for evaluating multiple reeds at once."""
+    tab = request.GET.get('tab', 'recent')
+    all_reeds = Reedsdata.objects.filter(reedauthor=request.user).order_by('-date')
+    pinned_ids = set(PinnedReed.objects.filter(user=request.user).values_list('reed_id', flat=True))
+
+    if tab == 'selected':
+        reeds = all_reeds.filter(pk__in=pinned_ids)
+    else:
+        reeds = all_reeds[:6]
+
+    if request.method == 'POST':
+        from django.contrib import messages
+        saved, errors = 0, []
+
+        # Card fields submitted per reed (excluding global_quality which is handled separately)
+        CARD_FIELDS = [
+            'stiffness', 'playing_ease', 'intonation', 'tone_color', 'response',
+            'counts_rehearsal', 'counts_concert', 'note',
+        ]
+        INT_CARD_FIELDS = {'stiffness', 'playing_ease', 'intonation', 'tone_color', 'response',
+                           'counts_rehearsal', 'counts_concert'}
+
+        for reed in all_reeds:
+            pk = str(reed.pk)
+            gq_raw = request.POST.get(f'global_quality_{pk}', '').strip()
+            card_vals = {f: request.POST.get(f'{f}_{pk}', '').strip() for f in CARD_FIELDS}
+            if not gq_raw and not any(card_vals.values()):
+                continue
+
+            changed = False
+
+            # Global Quality → assign to next available impression slot
+            if gq_raw:
+                try:
+                    gq_val = int(gq_raw)
+                    if not (0 <= gq_val <= 10):
+                        errors.append(f'{reed.reed_ID}: Global Quality must be 0–10')
+                    else:
+                        if reed.global_quality_first_impression is None:
+                            reed.global_quality_first_impression = gq_val
+                        elif reed.global_quality_second_impression is None:
+                            reed.global_quality_second_impression = gq_val
+                        else:
+                            reed.global_quality_third_impression = gq_val
+                        changed = True
+                except ValueError:
+                    errors.append(f'{reed.reed_ID}: invalid Global Quality value')
+
+            # Other card fields
+            for field, raw in card_vals.items():
+                if not raw:
+                    continue
+                if field in INT_CARD_FIELDS:
+                    try:
+                        val = int(raw)
+                        if field in {'stiffness', 'playing_ease', 'intonation', 'tone_color', 'response'}:
+                            if not (0 <= val <= 10):
+                                errors.append(f'{reed.reed_ID} {field}: must be 0–10')
+                                continue
+                        setattr(reed, field, val)
+                        changed = True
+                    except ValueError:
+                        errors.append(f'{reed.reed_ID} {field}: invalid number')
+                else:
+                    setattr(reed, field, raw[:45])
+                    changed = True
+
+            if changed:
+                try:
+                    reed.save()
+                    saved += 1
+                except Exception as e:
+                    errors.append(f'{reed.reed_ID}: {e}')
+
+        if errors:
+            messages.error(request, 'Some errors: ' + '; '.join(errors))
+        if saved:
+            messages.success(request, f'Saved {saved} reed(s).')
+        return redirect('reeds:evaluate_list')
+
+    playing_fields = [
+        ('stiffness', 'Stiffness'),
+        ('playing_ease', 'Playing Ease'),
+        ('intonation', 'Intonation'),
+        ('tone_color', 'Tone Color'),
+        ('response', 'Response'),
+    ]
+
+    return render(request, 'reedsdata/evaluate_list.html', {
+        'reeds': reeds,
+        'playing_fields': playing_fields,
+        'tab': tab,
+        'pinned_ids': pinned_ids,
+    })
+
+
+@login_required
+@require_reed_owner
+def evaluate_detail(request, pk):
+    """Single reed evaluation page."""
+    reed = get_object_or_404(Reedsdata, pk=pk, reedauthor=request.user)
+    reeds_qs = Reedsdata.objects.filter(reedauthor=request.user).order_by('-date')
+    pks = list(reeds_qs.values_list('pk', flat=True))
+    idx = pks.index(pk) if pk in pks else None
+    prev_pk = pks[idx + 1] if idx is not None and idx + 1 < len(pks) else None
+    next_pk = pks[idx - 1] if idx is not None and idx > 0 else None
+
+    if request.method == 'POST':
+        for field in EVALUATION_FIELDS:
+            raw = request.POST.get(field, '').strip()
+            if raw == '':
+                setattr(reed, field, None)
+                continue
+            if field in INTEGER_EVAL_FIELDS:
+                try:
+                    setattr(reed, field, int(raw))
+                except ValueError:
+                    pass
+            elif field in FLOAT_EVAL_FIELDS:
+                try:
+                    setattr(reed, field, float(raw))
+                except ValueError:
+                    pass
+            else:
+                setattr(reed, field, raw[:100])
+        reed.save()
+        if next_pk:
+            return redirect('reeds:evaluate_detail', pk=next_pk)
+        return redirect('reeds:evaluate_list')
+
+    playing_fields = [
+        ('stiffness', 'Stiffness'),
+        ('playing_ease', 'Playing Ease'),
+        ('intonation', 'Intonation'),
+        ('tone_color', 'Tone Color'),
+        ('response', 'Response'),
+    ]
+    global_fields = [
+        ('global_quality_first_impression', '1st Impression'),
+        ('global_quality_second_impression', '2nd Impression'),
+        ('global_quality_third_impression', '3rd Impression'),
+    ]
+
+    return render(request, 'reedsdata/evaluate_detail.html', {
+        'reed': reed,
+        'prev_pk': prev_pk,
+        'next_pk': next_pk,
+        'playing_fields': playing_fields,
+        'global_fields': global_fields,
     })
 
 

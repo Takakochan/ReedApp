@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import data_entry, reedsdata_list, edit_reedsdata, delete_reedsdata, get_weather_data, add_batch, data_overview, save_parameter_settings, get_reed_data
+from .views import data_entry, reedsdata_list, edit_reedsdata, delete_reedsdata, get_weather_data, add_batch, data_overview, save_parameter_settings, get_reed_data, quick_evaluate, evaluate_list, evaluate_detail, toggle_pin
 
 #from .views import ReedsdataListView, ReedsdataCreateView, ReedsdataUpdateView, ReedsdataDeleteView
 
@@ -15,4 +15,8 @@ urlpatterns = [
     path('get-weather/', get_weather_data, name='get_weather'),
     path('save-parameter-settings/', save_parameter_settings, name='save_parameter_settings'),
     path('get-reed-data/', get_reed_data, name='get_reed_data'),
+    path('quick-evaluate/<int:pk>/', quick_evaluate, name='quick_evaluate'),
+    path('evaluate/', evaluate_list, name='evaluate_list'),
+    path('evaluate/<int:pk>/', evaluate_detail, name='evaluate_detail'),
+    path('pin/<int:pk>/', toggle_pin, name='toggle_pin'),
 ]
