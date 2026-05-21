@@ -112,7 +112,7 @@ Document your setup:
 
 ## Live Demo
 
-**Try it now:** [https://reedmanage.herokuapp.com](https://reedmanage.herokuapp.com)
+**Try it now:** [https://reedapp-demo-608d65906ed5.herokuapp.com](https://reedapp-demo-608d65906ed5.herokuapp.com)
 
 | Username | Password |
 |----------|----------|
