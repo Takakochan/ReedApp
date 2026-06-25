@@ -3,10 +3,10 @@
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404
+from django.core.cache import cache
 from functools import wraps
 from .models import Reedsdata
 import logging
-from django.utils import timezone
 
 # Set up security logging
 security_logger = logging.getLogger('reedsdata.security')
@@ -56,9 +56,7 @@ def get_client_ip(request):
     return ip
 
 def rate_limit_user(max_requests=20, window_minutes=15):
-    """Simple rate limiting per user"""
-    user_requests = {}
-
+    """Rate limiting per user using Django's cache (works across multiple processes/dynos)."""
     def decorator(view_func):
         @wraps(view_func)
         def wrapper(request, *args, **kwargs):
@@ -66,23 +64,21 @@ def rate_limit_user(max_requests=20, window_minutes=15):
                 return view_func(request, *args, **kwargs)
 
             user_id = request.user.id
-            now = timezone.now()
+            cache_key = f'rate_limit:{user_id}'
 
-            # Clean old requests
-            if user_id in user_requests:
-                user_requests[user_id] = [req_time for req_time in user_requests[user_id]
-                                        if (now - req_time).seconds < window_minutes * 60]
-            else:
-                user_requests[user_id] = []
+            try:
+                count = cache.incr(cache_key)
+            except ValueError:
+                cache.set(cache_key, 1, timeout=window_minutes * 60)
+                count = 1
 
-            # Check rate limit
-            if len(user_requests[user_id]) >= max_requests:
-                security_logger.warning(f'Rate limit exceeded by user {user_id} from IP {get_client_ip(request)}')
+            if count > max_requests:
+                security_logger.warning(
+                    f'Rate limit exceeded by user {user_id} from IP {get_client_ip(request)}'
+                )
                 from django.http import HttpResponseTooManyRequests
                 return HttpResponseTooManyRequests("Too many requests. Please try again later.")
 
-            # Add current request
-            user_requests[user_id].append(now)
             return view_func(request, *args, **kwargs)
         return wrapper
     return decorator

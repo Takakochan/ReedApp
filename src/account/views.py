@@ -102,7 +102,6 @@ def account_statistics_view(request):
         ('shaper', 'Shaper'),
         ('staple_model', 'Staple(ob)'),
         ('temperature', 'Temperature (from API)'),
-        ('altitude', 'Altitude (from API)'),
         ('humidity', 'Humidity (from API)'),
         ('air_pressure', 'Air Pressure (from API)'),
         ('weather_description', 'Weather Description'),
@@ -205,10 +204,10 @@ def export_data_csv(request):
     header = [
         'Date', 'Instrument', 'Cane Brand', 'Harvest Year', 'Gouging Machine',
         'Profile Model', 'Diameter', 'Thickness', 'Hardness', 'Flexibility',
-        'Density', 'Density Auto', 'Shaper', 'Staple Model', 'Thread Color',
+        'Density', 'Density Auto', 'Shaper', 'Staple Model',
         'Stiffness', 'Playing Ease', 'Intonation', 'Tone Color', 'Response',
-        'Global Quality', 'Temperature', 'Humidity', 'Air Pressure', 'Altitude',
-        'Weather Description', 'Location', 'Notes'
+        'Global Quality', 'Temperature', 'Humidity', 'Air Pressure',
+        'Weather Description', 'Location', 'Note'
     ]
     writer.writerow(header)
 
@@ -229,7 +228,6 @@ def export_data_csv(request):
             reed.density_auto or '',
             reed.shaper or '',
             reed.staple_model or '',
-            reed.thread_color or '',
             reed.stiffness or '',
             reed.playing_ease or '',
             reed.intonation or '',
@@ -239,10 +237,9 @@ def export_data_csv(request):
             reed.temperature or '',
             reed.humidity or '',
             reed.air_pressure or '',
-            reed.altitude or '',
             reed.weather_description or '',
             reed.location or '',
-            reed.notes or '',
+            reed.note or '',
         ]
         writer.writerow(row)
 
@@ -272,10 +269,10 @@ def export_data_excel(request):
     headers = [
         'Date', 'Instrument', 'Cane Brand', 'Harvest Year', 'Gouging Machine',
         'Profile Model', 'Diameter', 'Thickness', 'Hardness', 'Flexibility',
-        'Density', 'Density Auto', 'Shaper', 'Staple Model', 'Thread Color',
+        'Density', 'Density Auto', 'Shaper', 'Staple Model',
         'Stiffness', 'Playing Ease', 'Intonation', 'Tone Color', 'Response',
-        'Global Quality', 'Temperature', 'Humidity', 'Air Pressure', 'Altitude',
-        'Weather Description', 'Location', 'Notes'
+        'Global Quality', 'Temperature', 'Humidity', 'Air Pressure',
+        'Weather Description', 'Location', 'Note'
     ]
 
     for col_num, header in enumerate(headers, 1):
@@ -299,20 +296,18 @@ def export_data_excel(request):
         ws.cell(row=row_num, column=12, value=reed.density_auto or '')
         ws.cell(row=row_num, column=13, value=reed.shaper or '')
         ws.cell(row=row_num, column=14, value=reed.staple_model or '')
-        ws.cell(row=row_num, column=15, value=reed.thread_color or '')
-        ws.cell(row=row_num, column=16, value=reed.stiffness or '')
-        ws.cell(row=row_num, column=17, value=reed.playing_ease or '')
-        ws.cell(row=row_num, column=18, value=reed.intonation or '')
-        ws.cell(row=row_num, column=19, value=reed.tone_color or '')
-        ws.cell(row=row_num, column=20, value=reed.response or '')
-        ws.cell(row=row_num, column=21, value=reed.latest_global_quality or '')
-        ws.cell(row=row_num, column=22, value=reed.temperature or '')
-        ws.cell(row=row_num, column=23, value=reed.humidity or '')
-        ws.cell(row=row_num, column=24, value=reed.air_pressure or '')
-        ws.cell(row=row_num, column=25, value=reed.altitude or '')
-        ws.cell(row=row_num, column=26, value=reed.weather_description or '')
-        ws.cell(row=row_num, column=27, value=reed.location or '')
-        ws.cell(row=row_num, column=28, value=reed.notes or '')
+        ws.cell(row=row_num, column=15, value=reed.stiffness or '')
+        ws.cell(row=row_num, column=16, value=reed.playing_ease or '')
+        ws.cell(row=row_num, column=17, value=reed.intonation or '')
+        ws.cell(row=row_num, column=18, value=reed.tone_color or '')
+        ws.cell(row=row_num, column=19, value=reed.response or '')
+        ws.cell(row=row_num, column=20, value=reed.latest_global_quality or '')
+        ws.cell(row=row_num, column=21, value=reed.temperature or '')
+        ws.cell(row=row_num, column=22, value=reed.humidity or '')
+        ws.cell(row=row_num, column=23, value=reed.air_pressure or '')
+        ws.cell(row=row_num, column=24, value=reed.weather_description or '')
+        ws.cell(row=row_num, column=25, value=reed.location or '')
+        ws.cell(row=row_num, column=26, value=reed.note or '')
 
     # Adjust column widths
     for col in ws.columns:
@@ -367,7 +362,6 @@ def export_data_json(request):
             'density_auto': float(reed.density_auto) if reed.density_auto else None,
             'shaper': reed.shaper,
             'staple_model': reed.staple_model,
-            'thread_color': reed.thread_color,
             'stiffness': float(reed.stiffness) if reed.stiffness else None,
             'playing_ease': float(reed.playing_ease) if reed.playing_ease else None,
             'intonation': float(reed.intonation) if reed.intonation else None,
@@ -377,10 +371,9 @@ def export_data_json(request):
             'temperature': float(reed.temperature) if reed.temperature else None,
             'humidity': float(reed.humidity) if reed.humidity else None,
             'air_pressure': float(reed.air_pressure) if reed.air_pressure else None,
-            'altitude': float(reed.altitude) if reed.altitude else None,
             'weather_description': reed.weather_description,
             'location': reed.location,
-            'notes': reed.notes,
+            'note': reed.note,
         }
         data['reeds'].append(reed_data)
 

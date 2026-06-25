@@ -110,7 +110,6 @@ def data_entry(request):
             'temperature': float(recent_reed.temperature) if recent_reed.temperature else None,
             'humidity': float(recent_reed.humidity) if recent_reed.humidity else None,
             'air_pressure': float(recent_reed.air_pressure) if recent_reed.air_pressure else None,
-            'altitude': recent_reed.altitude,
             'weather_description': recent_reed.weather_description,
         }
     

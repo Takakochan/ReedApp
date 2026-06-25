@@ -127,6 +127,18 @@ DATABASES = {
     )
 }
 
+# Cache — Redis in production (set REDIS_URL env var), in-process cache in dev.
+# Multi-dyno production without Redis: rate limiting won't be shared across dynos.
+_redis_url = os.environ.get('REDIS_URL')
+if _redis_url:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django_redis.cache.RedisCache',
+            'LOCATION': _redis_url,
+            'OPTIONS': {'CLIENT_CLASS': 'django_redis.client.DefaultClient'},
+        }
+    }
+
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
 
